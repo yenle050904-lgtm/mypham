@@ -48,11 +48,26 @@ if (isset($_POST['confirm_order'])) {
     }
 }
 
+// Yêu cầu đăng nhập để thanh toán (Đảm bảo đồng bộ với các trang cá nhân)
+if (!isset($_SESSION['user'])) {
+    header("Location: ?page=login&redirect=checkout");
+    exit();
+}
+
 // Kiểm tra giỏ hàng hợp lệ lúc vào trang
 if (empty($_SESSION['cart'])) {
     header("Location: ?page=cart");
     exit();
 }
+
+// Lấy thông tin profile để tự động điền (Pre-fill)
+$stmt_u = $conn->prepare("SELECT fullname, phone, address, username FROM users WHERE username = ?");
+$stmt_u->execute([$_SESSION['user']]);
+$u_info = $stmt_u->fetch();
+
+$def_fullname = ($u_info['fullname'] && trim($u_info['fullname']) != '') ? $u_info['fullname'] : $u_info['username'];
+$def_phone    = $u_info['phone'] ?? '';
+$def_address  = $u_info['address'] ?? '';
 ?>
 
 <?php include 'layout/header.php'; ?>
@@ -78,14 +93,15 @@ if (empty($_SESSION['cart'])) {
                                 <div class="input-group">
                                     <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
                                     <input type="text" name="fullname" class="form-control border-start-0" 
-                                           value="<?= htmlspecialchars($_SESSION['user'] ?? '') ?>" required>
+                                           value="<?= htmlspecialchars($def_fullname) ?>" required>
                                 </div>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label fw-medium">Số điện thoại liên lạc</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-phone text-muted"></i></span>
-                                    <input type="tel" name="phone" class="form-control border-start-0" placeholder="Số điện thoại" required>
+                                    <input type="tel" name="phone" class="form-control border-start-0" 
+                                           placeholder="Số điện thoại" value="<?= htmlspecialchars($def_phone) ?>" required>
                                 </div>
                             </div>
                             <div class="mb-4">
@@ -93,7 +109,7 @@ if (empty($_SESSION['cart'])) {
                                 <div class="input-group">
                                     <span class="input-group-text bg-white border-end-0 align-items-start pt-2"><i class="fa-solid fa-location-arrow text-muted"></i></span>
                                     <textarea name="address" class="form-control border-start-0" rows="3" 
-                                              placeholder="Số nhà, đường, phường, quận, tỉnh..." required></textarea>
+                                              placeholder="Số nhà, đường, phường, quận, tỉnh..." required><?= htmlspecialchars($def_address) ?></textarea>
                                 </div>
                                 <div class="form-text small text-muted">Vui lòng nhập chính xác để chúng tôi giao hàng nhanh nhất.</div>
                             </div>

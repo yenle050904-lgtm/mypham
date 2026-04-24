@@ -20,6 +20,9 @@ if (isset($_POST['login'])) {
             $_SESSION['cart'][] = $pid;
             header("Location: ?page=cart");
             exit();
+        } elseif (isset($_GET['redirect'])) {
+            header("Location: ?page=" . htmlspecialchars($_GET['redirect']));
+            exit();
         } else {
             header("Location: index.php");
             exit();
