@@ -41,6 +41,15 @@ switch($page){
     case 'gioi_thieu': 
         include '../views/gioi_thieu.php';     // ← MỚI THÊM
         break;
+    case 'contact':
+        include '../views/contact.php';
+        break;
+    case 'chinh_sach':
+        include '../views/chinh_sach.php';
+        break;
+    case 'wishlist':
+        include '../views/wishlist.php';
+        break;
     case 'logout':
         include '../views/logout.php'; 
         break;
