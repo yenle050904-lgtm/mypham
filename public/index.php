@@ -68,8 +68,4 @@ switch($page){
     case 'my_orders': 
         include '../views/my_orders.php'; 
         break;
-    case 'load_more_products':
-        include '../views/load_more_products.php';
-        exit;   // ← Quan trọng: không load header/footer
-        break;
 }
