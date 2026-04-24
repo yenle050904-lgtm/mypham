@@ -23,20 +23,34 @@ if (!$product) {
 }
 
 // 2. XỬ LÝ GỬI ĐÁNH GIÁ (REVIEW)
-if (isset($_POST['submit_review']) && isset($_SESSION['user'])) {
-    // CSRF tự động kiểm tra
-    $rating = (int)$_POST['rating'];
-    $comment = trim($_POST['comment']);
-    
+$user_review = null;
+if (isset($_SESSION['user'])) {
     // Lấy user_id
     $u_stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
     $u_stmt->execute([$_SESSION['user']]);
     $u_id = $u_stmt->fetch()['id'];
 
-    if ($rating >= 1 && $rating <= 5) {
-        $r_stmt = $conn->prepare("INSERT INTO reviews (user_id, product_id, rating, comment) VALUES (?, ?, ?, ?)");
-        if ($r_stmt->execute([$u_id, $id, $rating, $comment])) {
-            $success = "Cảm ơn bạn đã đánh giá sản phẩm!";
+    // Kiểm tra xem user đã đánh giá chưa
+    $check_rev = $conn->prepare("SELECT * FROM reviews WHERE user_id = ? AND product_id = ?");
+    $check_rev->execute([$u_id, $id]);
+    $user_review = $check_rev->fetch();
+
+    if (isset($_POST['submit_review'])) {
+        if ($user_review) {
+            $error = "Bạn đã đánh giá sản phẩm này rồi!";
+        } else {
+            $rating = (int)$_POST['rating'];
+            $comment = trim($_POST['comment']);
+            
+            if ($rating >= 1 && $rating <= 5) {
+                $r_stmt = $conn->prepare("INSERT INTO reviews (user_id, product_id, rating, comment) VALUES (?, ?, ?, ?)");
+                if ($r_stmt->execute([$u_id, $id, $rating, $comment])) {
+                    $success = "Cảm ơn bạn đã đánh giá sản phẩm!";
+                    // Reload user_review sau khi insert thành công
+                    $check_rev->execute([$u_id, $id]);
+                    $user_review = $check_rev->fetch();
+                }
+            }
         }
     }
 }
@@ -131,9 +145,15 @@ $related_products = $stmt_rel->fetchAll();
                         <button class="btn btn-secondary btn-lg w-100 py-3" disabled>Tạm hết hàng</button>
                     <?php endif; ?>
                 </div>
-                <a href="?page=wishlist&add=<?= $product['id'] ?>" class="btn btn-outline-pink btn-lg px-4" title="Thêm vào yêu thích">
-                    <i class="fa-<?= isset($_SESSION['user']) ? 'regular' : 'solid' ?> fa-heart"></i>
-                </a>
+                <?php if (isset($_SESSION['user'])): ?>
+                    <a href="?page=wishlist&add=<?= $product['id'] ?>" class="btn btn-outline-pink btn-lg px-4" title="Thêm vào yêu thích">
+                        <i class="fa-regular fa-heart"></i>
+                    </a>
+                <?php else: ?>
+                    <a href="?page=login" class="btn btn-outline-pink btn-lg px-4" title="Đăng nhập để lưu yêu thích">
+                        <i class="fa-regular fa-heart"></i>
+                    </a>
+                <?php endif; ?>
             </div>
             
             <hr class="my-5">
@@ -151,27 +171,43 @@ $related_products = $stmt_rel->fetchAll();
         <div class="col-lg-8 shadow-sm p-4 rounded-4 bg-white">
             <h4 class="fw-bold mb-4">Đánh giá từ khách hàng</h4>
             
-            <?php if ($success): ?><div class="alert alert-success"><?= $success ?></div><?php endif; ?>
+            <?php if ($success): ?><div class="alert alert-success shadow-sm"><?= $success ?></div><?php endif; ?>
+            <?php if ($error): ?><div class="alert alert-danger shadow-sm"><?= $error ?></div><?php endif; ?>
 
             <?php if (isset($_SESSION['user'])): ?>
-                <form method="POST" class="mb-5 p-3 border rounded-4 bg-light">
-                    <?= csrf_input() ?>
-                    <h6 class="fw-bold mb-3">Gửi đánh giá của bạn</h6>
-                    <div class="mb-3">
-                        <label class="form-label small">Xếp hạng:</label>
-                        <select name="rating" class="form-select w-auto d-inline-block ms-2" required>
-                            <option value="5">⭐⭐⭐⭐⭐ 5 sao</option>
-                            <option value="4">⭐⭐⭐⭐ 4 sao</option>
-                            <option value="3">⭐⭐⭐ 3 sao</option>
-                            <option value="2">⭐⭐ 2 sao</option>
-                            <option value="1">⭐ 1 sao</option>
-                        </select>
+                <?php if ($user_review): ?>
+                    <div class="alert alert-info border-0 rounded-4 p-4 mb-5 shadow-sm">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-pink text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <h6 class="fw-bold mb-0">Bạn đã đánh giá sản phẩm này</h6>
+                        </div>
+                        <div class="text-warning mb-2 ms-5">
+                            <?php for($i=1; $i<=5; $i++) echo $i <= $user_review['rating'] ? '<i class="fa-solid fa-star me-1"></i>' : '<i class="fa-regular fa-star me-1"></i>'; ?>
+                        </div>
+                        <p class="mb-0 ms-5 text-muted italic small">"<?= htmlspecialchars($user_review['comment']) ?>"</p>
                     </div>
-                    <div class="mb-3">
-                        <textarea name="comment" class="form-control" rows="3" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..." required></textarea>
-                    </div>
-                    <button type="submit" name="submit_review" class="btn btn-pink px-4">Gửi đánh giá</button>
-                </form>
+                <?php else: ?>
+                    <form method="POST" class="mb-5 p-3 border rounded-4 bg-light">
+                        <?= csrf_input() ?>
+                        <h6 class="fw-bold mb-3">Gửi đánh giá của bạn</h6>
+                        <div class="mb-3">
+                            <label class="form-label small">Xếp hạng:</label>
+                            <select name="rating" class="form-select w-auto d-inline-block ms-2" required>
+                                <option value="5">⭐⭐⭐⭐⭐ 5 sao</option>
+                                <option value="4">⭐⭐⭐⭐ 4 sao</option>
+                                <option value="3">⭐⭐⭐ 3 sao</option>
+                                <option value="2">⭐⭐ 2 sao</option>
+                                <option value="1">⭐ 1 sao</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <textarea name="comment" class="form-control" rows="3" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..." required></textarea>
+                        </div>
+                        <button type="submit" name="submit_review" class="btn btn-pink px-4">Gửi đánh giá</button>
+                    </form>
+                <?php endif; ?>
             <?php else: ?>
                 <div class="alert alert-light border small text-center mb-5">
                     Vui lòng <a href="?page=login" class="text-pink fw-bold">Đăng nhập</a> để gửi đánh giá.

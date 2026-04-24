@@ -139,9 +139,15 @@
                         </a>
                         
                         <!-- Wishlist Button -->
-                        <a href="?page=wishlist&add=<?= $p['id'] ?>" class="position-absolute top-0 end-0 m-2 btn btn-sm btn-white rounded-circle shadow-sm text-pink wishlist-float">
-                            <i class="fa-regular fa-heart"></i>
-                        </a>
+                        <?php if (isset($_SESSION['user'])): ?>
+                            <a href="?page=wishlist&add=<?= $p['id'] ?>" class="position-absolute top-0 end-0 m-2 btn btn-sm btn-white rounded-circle shadow-sm text-pink wishlist-float">
+                                <i class="fa-regular fa-heart"></i>
+                            </a>
+                        <?php else: ?>
+                            <a href="?page=login" class="position-absolute top-0 end-0 m-2 btn btn-sm btn-white rounded-circle shadow-sm text-pink wishlist-float" title="Đăng nhập để lưu yêu thích">
+                                <i class="fa-regular fa-heart"></i>
+                            </a>
+                        <?php endif; ?>
                     </div>
                     <div class="card-body text-center d-flex flex-column p-4">
                         <h6 class="text-truncate fw-bold mb-2"><?= htmlspecialchars($p['name']) ?></h6>
