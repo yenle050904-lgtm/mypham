@@ -111,7 +111,4 @@ if (isset($_POST['cancel_order'])) {
     <?php endif; ?>
 </div>
 
-<?php include 'layout/header.php'; ?> 
-<?php // Chèn layout/header.php ở đầu rồi, nhầm chỗ cuối ?>
-<?php // (Thực tế file trước đó có include footer ở cuối, tôi sẽ sửa lại cho đúng) ?>
 <?php include 'layout/footer.php'; ?>
