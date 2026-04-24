@@ -183,10 +183,10 @@ $related_products = $stmt_rel->fetchAll();
                             </div>
                             <h6 class="fw-bold mb-0">Bạn đã đánh giá sản phẩm này</h6>
                         </div>
-                        <div class="text-warning mb-2 ms-5">
+                        <div class="text-warning mb-2" style="margin-left: 56px;">
                             <?php for($i=1; $i<=5; $i++) echo $i <= $user_review['rating'] ? '<i class="fa-solid fa-star me-1"></i>' : '<i class="fa-regular fa-star me-1"></i>'; ?>
                         </div>
-                        <p class="mb-0 ms-5 text-muted italic small">"<?= htmlspecialchars($user_review['comment']) ?>"</p>
+                        <p class="mb-0 text-muted italic small" style="margin-left: 56px;">"<?= htmlspecialchars($user_review['comment']) ?>"</p>
                     </div>
                 <?php else: ?>
                     <form method="POST" class="mb-5 p-3 border rounded-4 bg-light">
@@ -194,7 +194,7 @@ $related_products = $stmt_rel->fetchAll();
                         <h6 class="fw-bold mb-3">Gửi đánh giá của bạn</h6>
                         <div class="mb-3">
                             <label class="form-label small">Xếp hạng:</label>
-                            <select name="rating" class="form-select w-auto d-inline-block ms-2" required>
+                            <select name="rating" class="form-select d-inline-block ms-2" style="width: 220px;" required>
                                 <option value="5">⭐⭐⭐⭐⭐ 5 sao</option>
                                 <option value="4">⭐⭐⭐⭐ 4 sao</option>
                                 <option value="3">⭐⭐⭐ 3 sao</option>

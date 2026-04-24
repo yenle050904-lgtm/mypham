@@ -20,8 +20,8 @@ $order_code = 'ORD-' . date('YmdHis') . rand(10, 99);
 
 // 1. LƯU VÀO BẢNG orders (PDO)
 $stmt = $conn->prepare("
-    INSERT INTO orders (user_id, order_code, fullname, phone, address, total, status) 
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO orders (user_id, order_code, fullname, phone, address, total, status, payment_method) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 ");
 $status = 'Đang xử lý';
 $stmt->execute([
@@ -31,7 +31,8 @@ $stmt->execute([
     $order_data['phone'], 
     $order_data['address'], 
     $order_data['total'], 
-    $status
+    $status,
+    $order_data['payment_method']
 ]);
 
 // Lấy ID đơn hàng vừa tạo
@@ -71,21 +72,38 @@ unset($_SESSION['last_order']);
                     
                     <h2 class="fw-bold text-success mb-2">ĐẶT HÀNG THÀNH CÔNG!</h2>
                     <p class="text-secondary mb-5">Cảm ơn bạn <strong><?= htmlspecialchars($order_data['fullname']) ?></strong> đã tin tưởng mua sắm tại Mỹ Phẩm Xinh.</p>
-                    
-                    <div class="row g-3 text-start mb-5">
-                        <div class="col-md-6">
+                    <div class="row g-3 text-start mb-5 text-center">
+                        <div class="col-md-4">
                             <div class="bg-light p-4 rounded-4 h-100">
-                                <h6 class="fw-bold text-muted small text-uppercase mb-3">Mã đơn hàng</h6>
-                                <h4 class="text-pink fw-bold mb-0"><?= $order_code ?></h4>
+                                <h6 class="fw-bold text-muted small text-uppercase mb-3 text-center">Mã đơn hàng</h6>
+                                <h4 class="text-pink fw-bold mb-0 text-center"><?= $order_code ?></h4>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="bg-light p-4 rounded-4 h-100">
-                                <h6 class="fw-bold text-muted small text-uppercase mb-3">Tổng thanh toán</h6>
-                                <h4 class="text-danger fw-bold mb-0"><?= number_format($order_data['total']) ?> đ</h4>
+                                <h6 class="fw-bold text-muted small text-uppercase mb-3 text-center">Tổng thanh toán</h6>
+                                <h4 class="text-danger fw-bold mb-0 text-center"><?= number_format($order_data['total']) ?> đ</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="bg-light p-4 rounded-4 h-100">
+                                <h6 class="fw-bold text-muted small text-uppercase mb-3 text-center">Thanh toán</h6>
+                                <h4 class="fw-bold mb-0 small text-uppercase text-center"><?= $order_data['payment_method'] == 'cod' ? 'Tiền mặt' : 'Chuyển khoản' ?></h4>
                             </div>
                         </div>
                     </div>
+
+                    <?php if ($order_data['payment_method'] === 'bank'): ?>
+                        <div class="alert alert-primary border-0 rounded-4 p-4 mb-5 text-start shadow-sm">
+                            <h6 class="fw-bold mb-3"><i class="fa-solid fa-building-columns me-2"></i>Hướng dẫn chuyển khoản nhanh:</h6>
+                            <div class="row g-2">
+                                <div class="col-6">Ngân hàng:</div><div class="col-6 fw-bold">Vietcombank</div>
+                                <div class="col-6">Số tài khoản:</div><div class="col-6 fw-bold">1234567890</div>
+                                <div class="col-6">Chủ tài khoản:</div><div class="col-6 fw-bold text-uppercase">SHOP MY PHAM XINH</div>
+                                <div class="col-6">Nội dung CK:</div><div class="col-6 fw-bold text-danger"><?= $order_code ?></div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <div class="alert alert-info border-0 rounded-4 p-3 mb-5 small">
                         <i class="fa-solid fa-circle-info me-2"></i>Chúng tôi đã nhận được đơn hàng của bạn và sẽ sớm liên hệ qua số điện thoại để xác nhận vận chuyển.

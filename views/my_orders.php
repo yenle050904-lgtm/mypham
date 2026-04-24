@@ -71,6 +71,7 @@ if (isset($_POST['cancel_order'])) {
                                 <th class="ps-4">Mã đơn</th>
                                 <th>Ngày đặt</th>
                                 <th>Tổng tiền</th>
+                                <th>Thanh toán</th>
                                 <th>Trạng thái</th>
                                 <th class="text-center">Thao tác</th>
                             </tr>
@@ -81,6 +82,11 @@ if (isset($_POST['cancel_order'])) {
                                 <td class="ps-4" data-label="Mã đơn"><strong><?= htmlspecialchars($o['order_code']) ?></strong></td>
                                 <td data-label="Ngày đặt"><?= date('d/m/Y H:i', strtotime($o['created_at'])) ?></td>
                                 <td class="fw-bold text-pink" data-label="Tổng tiền"><?= number_format($o['total']) ?> đ</td>
+                                <td data-label="Thanh toán">
+                                    <span class="badge bg-<?= ($o['payment_method'] ?? 'cod') == 'cod' ? 'success' : 'primary' ?> opacity-75">
+                                        <?= ($o['payment_method'] ?? 'cod') == 'cod' ? 'Tiền mặt' : 'Chuyển khoản' ?>
+                                    </span>
+                                </td>
                                 <td data-label="Trạng thái">
                                     <span class="badge bg-<?= $o['status']=='Đang xử lý' ? 'warning' : ($o['status']=='Đã duyệt' ? 'primary' : ($o['status']=='Đã hủy' ? 'secondary' : 'success')) ?>">
                                         <?= htmlspecialchars($o['status']) ?>

@@ -58,6 +58,9 @@ $items = $stmt->fetchAll();
                         <tr><td><strong>Khách hàng:</strong></td><td><?= htmlspecialchars($order['fullname']) ?></td></tr>
                         <tr><td><strong>SĐT:</strong></td><td><?= htmlspecialchars($order['phone']) ?></td></tr>
                         <tr><td><strong>Địa chỉ:</strong></td><td><?= htmlspecialchars($order['address']) ?></td></tr>
+                        <tr><td><strong>Thanh toán:</strong></td>
+                            <td><span class="badge bg-<?= ($order['payment_method'] ?? 'cod') == 'cod' ? 'success' : 'primary' ?>"><?= ($order['payment_method'] ?? 'cod') == 'cod' ? 'Tiền mặt (COD)' : 'Chuyển khoản' ?></span></td>
+                        </tr>
                         <tr><td><strong>Trạng thái:</strong></td>
                             <td><span class="badge bg-<?= $order['status']=='Đang xử lý' ? 'warning' : ($order['status']=='Đã duyệt' ? 'primary' : 'success') ?> fs-6"><?= $order['status'] ?></span></td>
                         </tr>

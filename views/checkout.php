@@ -39,6 +39,7 @@ if (isset($_POST['confirm_order'])) {
                 'phone'    => $phone,
                 'address'  => $address,
                 'total'    => $total,
+                'payment_method' => $_POST['payment_method'] ?? 'cod',
                 'cart'     => $cart_items // Lưu giỏ vào orders (logic checkout.php của bạn cần cái này)
             ];
 
@@ -71,6 +72,15 @@ $def_address  = $u_info['address'] ?? '';
 ?>
 
 <?php include 'layout/header.php'; ?>
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .payment-option { transition: all 0.2s; border: 2px solid #eee !important; position: relative; }
+    .payment-option:hover { border-color: #ffb8d1 !important; }
+    .payment-option.active { border-color: #ff69b4 !important; background-color: #fff9fb; }
+    .payment-option input:checked + .d-flex { color: #ff69b4; }
+    .icon-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+</style>
 
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -112,6 +122,42 @@ $def_address  = $u_info['address'] ?? '';
                                               placeholder="Số nhà, đường, phường, quận, tỉnh..." required><?= htmlspecialchars($def_address) ?></textarea>
                                 </div>
                                 <div class="form-text small text-muted">Vui lòng nhập chính xác để chúng tôi giao hàng nhanh nhất.</div>
+                            </div>
+
+                            <h5 class="fw-bold mb-4 mt-5"><i class="fa-solid fa-credit-card me-2 text-pink"></i>Phương thức thanh toán</h5>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="payment-option active w-100 p-3 border rounded-3 cursor-pointer d-block" id="label-cod">
+                                        <input type="radio" name="payment_method" value="cod" class="d-none" checked onclick="toggleBank(false, this)">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-circle bg-success text-white me-3"><i class="fa-solid fa-money-bill-wave"></i></div>
+                                            <div>
+                                                <div class="fw-bold">Thanh toán khi nhận hàng</div>
+                                                <div class="small text-muted">Trả tiền mặt khi nhận hàng (COD)</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="payment-option w-100 p-3 border rounded-3 cursor-pointer d-block" id="label-bank">
+                                        <input type="radio" name="payment_method" value="bank" class="d-none" onclick="toggleBank(true, this)">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-circle bg-primary text-white me-3"><i class="fa-solid fa-building-columns"></i></div>
+                                            <div>
+                                                <div class="fw-bold">Chuyển khoản ngân hàng</div>
+                                                <div class="small text-muted">Chuyển khoản qua số tài khoản</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="bank-info" class="alert alert-info border-0 shadow-sm mb-4 d-none">
+                                <h6 class="fw-bold"><i class="fa-solid fa-info-circle me-2"></i>Thông tin chuyển khoản:</h6>
+                                <p class="mb-1 small">Ngân hàng: <strong>Vietcombank</strong></p>
+                                <p class="mb-1 small">Số TK: <strong>1234567890</strong></p>
+                                <p class="mb-1 small">Chủ TK: <strong>SHOP MY PHAM XINH</strong></p>
+                                <p class="mb-0 small">Nội dung CK: <span class="text-danger fw-bold">[Mã đơn hàng]</span> (Sẽ hiển thị sau khi đặt xong)</p>
                             </div>
 
                             <button type="submit" name="confirm_order" class="btn btn-pink w-100 py-3 fs-5 mt-2 shadow-sm">
@@ -178,3 +224,18 @@ $def_address  = $u_info['address'] ?? '';
 </div>
 
 <?php include 'layout/footer.php'; ?>
+
+<script>
+function toggleBank(show, input) {
+    const bankInfo = document.getElementById('bank-info');
+    if (show) {
+        bankInfo.classList.remove('d-none');
+    } else {
+        bankInfo.classList.add('d-none');
+    }
+    
+    // Toggle class active cho label
+    document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('active'));
+    input.closest('.payment-option').classList.add('active');
+}
+</script>

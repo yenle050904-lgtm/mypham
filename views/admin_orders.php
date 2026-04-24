@@ -125,14 +125,15 @@ $orders = $stmt->fetchAll();
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-light text-dark">
-                            <tr>
-                                <th class="ps-3">Mã đơn</th>
-                                <th>Ngày đặt</th>
-                                <th>Khách hàng</th>
-                                <th>Tổng tiền</th>
-                                <th>Trạng thái</th>
-                                <th class="text-center">Hành động</th>
-                            </tr>
+                                <tr>
+                                    <th class="ps-3">Mã đơn</th>
+                                    <th>Ngày đặt</th>
+                                    <th>Khách hàng</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Thanh toán</th>
+                                    <th>Trạng thái</th>
+                                    <th class="text-center">Hành động</th>
+                                </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($orders as $order): ?>
@@ -144,6 +145,11 @@ $orders = $stmt->fetchAll();
                                     <div class="small text-muted"><?= htmlspecialchars($order['phone']) ?></div>
                                 </td>
                                 <td class="fw-bold text-danger"><?= number_format($order['total']) ?> đ</td>
+                                <td>
+                                    <span class="badge bg-<?= ($order['payment_method'] ?? 'cod') == 'cod' ? 'success' : 'primary' ?> opacity-75">
+                                        <?= ($order['payment_method'] ?? 'cod') == 'cod' ? 'TIỀN MẶT' : 'CHUYỂN KHOẢN' ?>
+                                    </span>
+                                </td>
                                 <td>
                                     <span class="badge bg-<?= $order['status']=='Đang xử lý' ? 'warning' : ($order['status']=='Đã duyệt' ? 'primary' : ($order['status']=='Đã hủy' ? 'secondary' : 'success')) ?>">
                                         <?= htmlspecialchars($order['status']) ?>
