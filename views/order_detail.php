@@ -21,8 +21,14 @@ if (!$order) {
     die('<div class="container py-5"><div class="alert alert-danger text-center">Đơn hàng không tồn tại!</div></div>');
 }
 
-// Nếu không phải admin, kiểm tra xem có đúng là đơn hàng của mình không
-if ($_SESSION['user'] !== 'admin' && $order['fullname'] !== $_SESSION['user']) {
+// Lấy ID của user đang đăng nhập
+$stmt_u = $conn->prepare("SELECT id FROM users WHERE username = ?");
+$stmt_u->execute([$_SESSION['user']]);
+$user_row = $stmt_u->fetch();
+$current_user_id = $user_row['id'] ?? null;
+
+// Nếu không phải admin, kiểm tra xem có đúng là đơn hàng của mình không (dựa trên user_id)
+if ($_SESSION['user'] !== 'admin' && (int)$order['user_id'] !== (int)$current_user_id) {
     die('<div class="container py-5"><div class="alert alert-danger text-center">Bạn không có quyền xem đơn hàng của người khác!</div></div>');
 }
 

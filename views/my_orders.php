@@ -8,15 +8,24 @@ if (!isset($_SESSION['user']) || $_SESSION['user'] === 'admin') {
 $success = '';
 $error = '';
 
+// Lấy ID của user đang đăng nhập
+$stmt_u = $conn->prepare("SELECT id FROM users WHERE username = ?");
+$stmt_u->execute([$_SESSION['user']]);
+$user_row = $stmt_u->fetch();
+if (!$user_row) {
+    header("Location: ?page=logout");
+    exit();
+}
+$current_user_id = $user_row['id'];
+
 // Xử lý Hủy Đơn Hàng
 if (isset($_POST['cancel_order'])) {
     // CSRF tự động kiểm tra
     $order_id = (int)$_POST['order_id'];
-    $fullname = $_SESSION['user'];
 
-    // Chỉ được hủy nếu status là 'Đang xử lý' và đúng là đơn của mình
-    $stmt = $conn->prepare("SELECT status FROM orders WHERE id = ? AND fullname = ?");
-    $stmt->execute([$order_id, $fullname]);
+    // Chỉ được hủy nếu status là 'Đang xử lý' và đúng là đơn của mình (dựa trên user_id)
+    $stmt = $conn->prepare("SELECT status FROM orders WHERE id = ? AND user_id = ?");
+    $stmt->execute([$order_id, $current_user_id]);
     $order = $stmt->fetch();
 
     if ($order && $order['status'] === 'Đang xử lý') {
@@ -41,9 +50,8 @@ if (isset($_POST['cancel_order'])) {
     <?php if ($error): ?><div class="alert alert-danger shadow-sm"><?= $error ?></div><?php endif; ?>
 
     <?php
-    $fullname = $_SESSION['user'];
-    $stmt = $conn->prepare("SELECT * FROM orders WHERE fullname = ? ORDER BY id DESC");
-    $stmt->execute([$fullname]);
+    $stmt = $conn->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC");
+    $stmt->execute([$current_user_id]);
     $orders = $stmt->fetchAll();
     ?>
 
