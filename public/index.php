@@ -11,6 +11,12 @@ switch($page){
     case 'register': 
         include '../views/register.php'; 
         break;
+    case 'forgot_password':
+        include '../views/forgot_password.php';
+        break;
+    case 'reset_password':
+        include '../views/reset_password.php';
+        break;
     case 'cart': 
         include '../views/cart.php'; 
         break;

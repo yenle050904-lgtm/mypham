@@ -52,6 +52,7 @@ if (isset($_GET['delete'])) {
                         <tr>
                             <th width="80">ID</th>
                             <th>Tên đăng nhập</th>
+                            <th>Email</th>
                             <th>Vai trò</th>
                             <th class="text-center" width="150">Thao tác</th>
                         </tr>
@@ -61,6 +62,7 @@ if (isset($_GET['delete'])) {
                         <tr>
                             <td class="text-muted">#<?= $u['id'] ?></td>
                             <td class="fw-bold"><?= htmlspecialchars($u['username']) ?></td>
+                            <td><?= htmlspecialchars($u['email'] ?? 'Chưa có') ?></td>
                             <td>
                                 <span class="badge bg-<?= ($u['role'] === 'admin') ? 'danger' : 'primary' ?>">
                                     <?= strtoupper($u['role']) ?>

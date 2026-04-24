@@ -65,9 +65,12 @@ if (isset($_POST['login'])) {
                            placeholder="Mật khẩu" 
                            required>
 
-                    <button type="submit" name="login" class="btn btn-pink w-100 mb-4">
+                    <button type="submit" name="login" class="btn btn-pink w-100 mb-2">
                         Đăng nhập
                     </button>
+                    <div class="text-end">
+                        <a href="?page=forgot_password" class="text-muted small text-decoration-none">Quên mật khẩu?</a>
+                    </div>
                 </form>
 
                 <div class="text-center mt-4">

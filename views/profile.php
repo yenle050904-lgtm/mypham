@@ -17,18 +17,33 @@ $user = $stmt->fetch();
 if (isset($_POST['update_profile'])) {
     // CSRF đã được config/security.php tự động kiểm tra
     $fullname = trim($_POST['fullname']);
+    $email    = trim($_POST['email']);
     $phone    = trim($_POST['phone']);
     $address  = trim($_POST['address']);
 
-    $update = $conn->prepare("UPDATE users SET fullname = ?, phone = ?, address = ? WHERE username = ?");
-    if ($update->execute([$fullname, $phone, $address, $username])) {
-        $success = "Cập nhật hồ sơ thành công!";
-        // Cập nhật lại dữ liệu hiển thị
-        $user['fullname'] = $fullname;
-        $user['phone'] = $phone;
-        $user['address'] = $address;
+    if (empty($email)) {
+        $error = "Email không được để trống!";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Email không hợp lệ!";
     } else {
-        $error = "Có lỗi xảy ra, vui lòng thử lại.";
+        // Kiểm tra trùng email (trừ bản thân)
+        $stmt_e = $conn->prepare("SELECT id FROM users WHERE email = ? AND username != ?");
+        $stmt_e->execute([$email, $username]);
+        if ($stmt_e->fetch()) {
+            $error = "Email này đã được sử dụng bởi một tài khoản khác!";
+        } else {
+            $update = $conn->prepare("UPDATE users SET fullname = ?, email = ?, phone = ?, address = ? WHERE username = ?");
+            if ($update->execute([$fullname, $email, $phone, $address, $username])) {
+                $success = "Cập nhật hồ sơ thành công!";
+                // Cập nhật lại dữ liệu hiển thị
+                $user['fullname'] = $fullname;
+                $user['email'] = $email;
+                $user['phone'] = $phone;
+                $user['address'] = $address;
+            } else {
+                $error = "Có lỗi xảy ra, vui lòng thử lại.";
+            }
+        }
     }
 }
 
@@ -67,13 +82,17 @@ if (isset($_POST['change_password'])) {
                     <form method="POST">
                         <?= csrf_input() ?>
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold text-muted">Tên người dùng (Username)</label>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold text-muted">Tên người dùng</label>
                                 <input type="text" class="form-control bg-light border-0" value="<?= htmlspecialchars($user['username']) ?>" readonly>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label small fw-bold">Họ và tên</label>
                                 <input type="text" name="fullname" class="form-control" value="<?= htmlspecialchars($user['fullname'] ?? '') ?>" placeholder="Nhập họ tên đầy đủ">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Email</label>
+                                <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email'] ?? '') ?>" placeholder="Nhập email" required>
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label small fw-bold">Số điện thoại</label>
