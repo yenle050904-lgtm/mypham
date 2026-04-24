@@ -1,0 +1,164 @@
+<?php
+// ==================== XỬ LÝ ĐẶT HÀNG TRƯỚC KHI XUẤT HTML ====================
+if (isset($_POST['confirm_order'])) {
+    // CSRF tự động kiểm tra
+    if (empty($_SESSION['cart'])) {
+        header("Location: ?page=cart");
+        exit();
+    }
+
+    $fullname = trim($_POST['fullname']);
+    $phone    = trim($_POST['phone']);
+    $address  = trim($_POST['address']);
+
+    if (empty($fullname) || empty($phone) || empty($address)) {
+        $error = "Vui lòng điền đầy đủ thông tin!";
+    } else {
+        // Kiểm tra lại toàn bộ giỏ hàng trước khi cho phép đặt
+        $total = 0;
+        $cart_items = array_count_values($_SESSION['cart'] ?? []);
+        $invalid_found = false;
+        
+        foreach ($cart_items as $id => $qty) {
+            $stmt = $conn->prepare("SELECT price, status FROM products WHERE id = ?");
+            $stmt->execute([$id]);
+            $row = $stmt->fetch();
+            
+            if (!$row || $row['status'] != 'active') {
+                $invalid_found = true;
+                break;
+            }
+            $total += $row['price'] * $qty;
+        }
+
+        if ($invalid_found) {
+            $error = "Có sản phẩm trong giỏ hàng đã hết hàng hoặc không hợp lệ. Vui lòng quay lại giỏ hàng!";
+        } else {
+            $_SESSION['last_order'] = [
+                'fullname' => $fullname,
+                'phone'    => $phone,
+                'address'  => $address,
+                'total'    => $total,
+                'cart'     => $cart_items // Lưu giỏ vào orders (logic checkout.php của bạn cần cái này)
+            ];
+
+            header("Location: ?page=order_success");
+            exit();
+        }
+    }
+}
+
+// Kiểm tra giỏ hàng hợp lệ lúc vào trang
+if (empty($_SESSION['cart'])) {
+    header("Location: ?page=cart");
+    exit();
+}
+?>
+
+<?php include 'layout/header.php'; ?>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h2 class="fw-bold mb-5 text-center">💳 Hoàn tất đặt hàng</h2>
+            
+            <?php if (isset($error)): ?>
+                <div class="alert alert-danger text-center shadow-sm border-0 mb-4"><?= $error ?></div>
+            <?php endif; ?>
+
+            <div class="row g-4">
+                <!-- Thông tin người nhận -->
+                <div class="col-lg-7">
+                    <div class="card shadow-sm border-0 p-4">
+                        <h5 class="fw-bold mb-4"><i class="fa-solid fa-map-location-dot me-2 text-pink"></i>Thông tin vận chuyển</h5>
+                        <form method="POST">
+                            <?= csrf_input() ?>
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Họ và tên người nhận</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+                                    <input type="text" name="fullname" class="form-control border-start-0" 
+                                           value="<?= htmlspecialchars($_SESSION['user'] ?? '') ?>" required>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Số điện thoại liên lạc</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-phone text-muted"></i></span>
+                                    <input type="tel" name="phone" class="form-control border-start-0" placeholder="Số điện thoại" required>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Địa chỉ giao hàng</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0 align-items-start pt-2"><i class="fa-solid fa-location-arrow text-muted"></i></span>
+                                    <textarea name="address" class="form-control border-start-0" rows="3" 
+                                              placeholder="Số nhà, đường, phường, quận, tỉnh..." required></textarea>
+                                </div>
+                                <div class="form-text small text-muted">Vui lòng nhập chính xác để chúng tôi giao hàng nhanh nhất.</div>
+                            </div>
+
+                            <button type="submit" name="confirm_order" class="btn btn-pink w-100 py-3 fs-5 mt-2 shadow-sm">
+                                <i class="fa-solid fa-check-circle me-2"></i> Xác nhận & Đặt hàng
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Tóm tắt đơn hàng -->
+                <div class="col-lg-5">
+                    <div class="card shadow-sm border-0 bg-light p-4 sticky-top" style="top:100px;">
+                        <h5 class="fw-bold mb-4"><i class="fa-solid fa-bag-shopping me-2 text-pink"></i>Tóm tắt đơn hàng</h5>
+                        <div class="checkout-items mb-4 custom-scrollbar" style="max-height: 300px; overflow-y: auto;">
+                            <?php 
+                            $total = 0;
+                            $cart_items = array_count_values($_SESSION['cart'] ?? []);
+                            foreach($cart_items as $id => $qty): 
+                                $stmt = $conn->prepare("SELECT * FROM products WHERE id=?");
+                                $stmt->execute([$id]);
+                                $p = $stmt->fetch();
+                                if(!$p) continue;
+                                $subtotal = $p['price'] * $qty;
+                                $total += $subtotal;
+                            ?>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="position-relative">
+                                    <?php 
+                                    $img_src = (file_exists('uploads/' . $p['image']) && !empty($p['image'])) ? 'uploads/' . $p['image'] : 'images/' . $p['image'];
+                                    ?>
+                                    <img src="<?= $img_src ?>" class="rounded border" style="width:50px;height:50px;object-fit:cover;">
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary" style="font-size: 10px;">
+                                        <?= $qty ?>
+                                    </span>
+                                </div>
+                                <div class="ms-3 flex-grow-1">
+                                    <div class="small fw-bold text-truncate" style="max-width: 150px;"><?= htmlspecialchars($p['name']) ?></div>
+                                    <div class="small text-muted"><?= number_format($p['price']) ?> đ</div>
+                                </div>
+                                <div class="ms-2 fw-bold small"><?= number_format($subtotal) ?> đ</div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        
+                        <div class="border-top pt-3 mt-3">
+                            <div class="d-flex justify-content-between mb-2 text-muted">
+                                <span>Tạm tính</span>
+                                <span><?= number_format($total) ?> đ</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3 text-muted">
+                                <span>Phí giao hàng</span>
+                                <span class="text-success small">Miễn phí</span>
+                            </div>
+                            <div class="d-flex justify-content-between fs-4 pt-3 border-top">
+                                <span class="fw-bold">Tổng tiền</span>
+                                <span class="fw-bold text-pink"><?= number_format($total) ?> đ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include 'layout/footer.php'; ?>

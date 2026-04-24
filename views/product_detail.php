@@ -1,0 +1,231 @@
+<?php 
+include 'layout/header.php'; 
+
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die('<div class="container py-5"><div class="alert alert-danger">Không tìm thấy sản phẩm!</div></div>');
+}
+
+$id = (int)$_GET['id'];
+$success = '';
+$error = '';
+
+// 1. LẤY THÔNG TIN SẢN PHẨM
+$stmt = $conn->prepare("SELECT p.*, 
+                           COALESCE(c.name, 'Chưa phân loại') as category_name 
+                      FROM products p 
+                      LEFT JOIN categories c ON p.category_id = c.id 
+                      WHERE p.id = ? AND p.status != 'hidden'");
+$stmt->execute([$id]);
+$product = $stmt->fetch();
+
+if (!$product) {
+    die('<div class="container py-5"><div class="alert alert-danger">Sản phẩm không tồn tại hoặc đã bị ẩn!</div></div>');
+}
+
+// 2. XỬ LÝ GỬI ĐÁNH GIÁ (REVIEW)
+if (isset($_POST['submit_review']) && isset($_SESSION['user'])) {
+    // CSRF tự động kiểm tra
+    $rating = (int)$_POST['rating'];
+    $comment = trim($_POST['comment']);
+    
+    // Lấy user_id
+    $u_stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
+    $u_stmt->execute([$_SESSION['user']]);
+    $u_id = $u_stmt->fetch()['id'];
+
+    if ($rating >= 1 && $rating <= 5) {
+        $r_stmt = $conn->prepare("INSERT INTO reviews (user_id, product_id, rating, comment) VALUES (?, ?, ?, ?)");
+        if ($r_stmt->execute([$u_id, $id, $rating, $comment])) {
+            $success = "Cảm ơn bạn đã đánh giá sản phẩm!";
+        }
+    }
+}
+
+// 3. LẤY DANH SÁCH ĐÁNH GIÁ
+$stmt_rev = $conn->prepare("SELECT r.*, u.username FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.product_id = ? ORDER BY r.created_at DESC");
+$stmt_rev->execute([$id]);
+$reviews = $stmt_rev->fetchAll();
+
+// Tính trung bình sao
+$avg_rating = 0;
+if (count($reviews) > 0) {
+    $sum = 0;
+    foreach($reviews as $r) $sum += $r['rating'];
+    $avg_rating = round($sum / count($reviews), 1);
+}
+
+// 4. LẤY SẢN PHẨM LIÊN QUAN (Cùng danh mục)
+$stmt_rel = $conn->prepare("SELECT * FROM products WHERE category_id = ? AND id != ? AND status != 'hidden' LIMIT 4");
+$stmt_rel->execute([$product['category_id'], $id]);
+$related_products = $stmt_rel->fetchAll();
+?>
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Hình ảnh sản phẩm -->
+        <div class="col-lg-6">
+            <div class="position-relative">
+                <?php if($product['status'] == 'out_of_stock'): ?>
+                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded-4" style="background: rgba(0,0,0,0.3); z-index: 2;">
+                        <span class="badge bg-danger fs-4 px-4 py-2 shadow-lg">TẠM HẾT HÀNG</span>
+                    </div>
+                <?php endif; ?>
+
+                <?php 
+                $img_src = (file_exists('uploads/' . $product['image']) && !empty($product['image'])) ? 'uploads/' . $product['image'] : 'images/' . $product['image'];
+                ?>
+                <img src="<?= $img_src ?>" 
+                     class="img-fluid rounded-4 shadow w-100" 
+                     alt="<?= htmlspecialchars($product['name']) ?>">
+            </div>
+        </div>
+
+        <!-- Thông tin chi tiết -->
+        <div class="col-lg-6">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="?page=home" class="text-pink">Trang chủ</a></li>
+                    <li class="breadcrumb-item">
+                        <a href="?page=home&category_id=<?= $product['category_id'] ?>" class="text-pink">
+                            <?= htmlspecialchars($product['category_name']) ?>
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active"><?= htmlspecialchars($product['name']) ?></li>
+                </ol>
+            </nav>
+
+            <h1 class="display-6 fw-bold"><?= htmlspecialchars($product['name']) ?></h1>
+            
+            <div class="d-flex align-items-center mb-3">
+                <div class="text-warning me-2">
+                    <?php for($i=1; $i<=5; $i++): ?>
+                        <i class="fa-<?= $i <= $avg_rating ? 'solid' : 'regular' ?> fa-star"></i>
+                    <?php endfor; ?>
+                </div>
+                <span class="text-muted">(<?= count($reviews) ?> đánh giá)</span>
+                <span class="mx-2 text-muted">|</span>
+                <span class="text-success small"><i class="fa-solid fa-check-circle me-1"></i>Chính hãng</span>
+            </div>
+
+            <p class="text-pink fs-3 fw-bold mb-4"><?= number_format($product['price']) ?> đ</p>
+
+            <div class="mb-4">
+                <?php if($product['status'] == 'active'): ?>
+                    <span class="badge bg-success fs-6"><i class="fa-solid fa-check me-1"></i> Sẵn sàng giao hàng</span>
+                <?php elseif($product['status'] == 'out_of_stock'): ?>
+                    <span class="badge bg-danger fs-6"><i class="fa-solid fa-xmark me-1"></i> Tạm hết hàng</span>
+                <?php endif; ?>
+            </div>
+
+            <div class="product-description mb-4">
+                <p class="text-muted"><?= nl2br(htmlspecialchars($product['description'] ?: 'Thông tin sản phẩm đang được cập nhật...')) ?></p>
+            </div>
+
+            <div class="d-flex gap-3">
+                <div class="flex-grow-1">
+                    <?php if ($product['status'] == 'active'): ?>
+                        <a href="?page=cart&add=<?= $product['id'] ?>" class="btn btn-pink btn-lg w-100 py-3 shadow-sm">
+                            <i class="fa-solid fa-cart-plus me-2"></i>Thêm vào giỏ hàng
+                        </a>
+                    <?php else: ?>
+                        <button class="btn btn-secondary btn-lg w-100 py-3" disabled>Tạm hết hàng</button>
+                    <?php endif; ?>
+                </div>
+                <a href="?page=wishlist&add=<?= $product['id'] ?>" class="btn btn-outline-pink btn-lg px-4" title="Thêm vào yêu thích">
+                    <i class="fa-<?= isset($_SESSION['user']) ? 'regular' : 'solid' ?> fa-heart"></i>
+                </a>
+            </div>
+            
+            <hr class="my-5">
+            <div class="row g-3">
+                <div class="col-6"><i class="fa-solid fa-truck-fast text-pink me-2"></i>Giao nhanh 2h</div>
+                <div class="col-6"><i class="fa-solid fa-shield-heart text-pink me-2"></i>Bảo mật 100%</div>
+                <div class="col-6"><i class="fa-solid fa-rotate-left text-pink me-2"></i>Đổi trả 7 ngày</div>
+                <div class="col-6"><i class="fa-solid fa-gift text-pink me-2"></i>Quà tặng hấp dẫn</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ĐÁNH GIÁ SẢN PHẨM -->
+    <div class="row mt-5 pt-5">
+        <div class="col-lg-8 shadow-sm p-4 rounded-4 bg-white">
+            <h4 class="fw-bold mb-4">Đánh giá từ khách hàng</h4>
+            
+            <?php if ($success): ?><div class="alert alert-success"><?= $success ?></div><?php endif; ?>
+
+            <?php if (isset($_SESSION['user'])): ?>
+                <form method="POST" class="mb-5 p-3 border rounded-4 bg-light">
+                    <?= csrf_input() ?>
+                    <h6 class="fw-bold mb-3">Gửi đánh giá của bạn</h6>
+                    <div class="mb-3">
+                        <label class="form-label small">Xếp hạng:</label>
+                        <select name="rating" class="form-select w-auto d-inline-block ms-2" required>
+                            <option value="5">⭐⭐⭐⭐⭐ 5 sao</option>
+                            <option value="4">⭐⭐⭐⭐ 4 sao</option>
+                            <option value="3">⭐⭐⭐ 3 sao</option>
+                            <option value="2">⭐⭐ 2 sao</option>
+                            <option value="1">⭐ 1 sao</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <textarea name="comment" class="form-control" rows="3" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..." required></textarea>
+                    </div>
+                    <button type="submit" name="submit_review" class="btn btn-pink px-4">Gửi đánh giá</button>
+                </form>
+            <?php else: ?>
+                <div class="alert alert-light border small text-center mb-5">
+                    Vui lòng <a href="?page=login" class="text-pink fw-bold">Đăng nhập</a> để gửi đánh giá.
+                </div>
+            <?php endif; ?>
+
+            <?php if (empty($reviews)): ?>
+                <p class="text-muted text-center pt-3">Chưa có đánh giá nào cho sản phẩm này.</p>
+            <?php else: ?>
+                <?php foreach($reviews as $r): ?>
+                <div class="d-flex mb-4 border-bottom pb-3">
+                    <div class="flex-shrink-0">
+                        <div class="bg-pink text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <?= strtoupper(substr($r['username'], 0, 1)) ?>
+                        </div>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="fw-bold mb-0"><?= htmlspecialchars($r['username']) ?></h6>
+                            <small class="text-muted"><?= date('d/m/Y', strtotime($r['created_at'])) ?></small>
+                        </div>
+                        <div class="text-warning small mb-2">
+                            <?php for($i=1; $i<=5; $i++) echo $i <= $r['rating'] ? '★' : '☆'; ?>
+                        </div>
+                        <p class="mb-0 text-dark small"><?= nl2br(htmlspecialchars($r['comment'])) ?></p>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
+        <!-- SẢN PHẨM LIÊN QUAN -->
+        <div class="col-lg-4 ps-lg-5">
+            <h4 class="fw-bold mb-4">Sản phẩm liên quan</h4>
+            <?php if(empty($related_products)): ?>
+                <p class="small text-muted">Không có sản phẩm liên quan.</p>
+            <?php else: ?>
+                <?php foreach($related_products as $rel): ?>
+                <a href="?page=product_detail&id=<?= $rel['id'] ?>" class="text-decoration-none text-dark">
+                    <div class="d-flex align-items-center mb-3 p-2 rounded-3 hover-shadow-sm transition-all" style="background: #fff; border: 1px solid #f0f0f0;">
+                        <?php 
+                        $rel_img = (file_exists('uploads/' . $rel['image']) && !empty($rel['image'])) ? 'uploads/' . $rel['image'] : 'images/' . $rel['image'];
+                        ?>
+                        <img src="<?= $rel_img ?>" class="rounded border" style="width: 70px; height: 70px; object-fit: cover;">
+                        <div class="ms-3 overflow-hidden">
+                            <div class="small fw-bold text-truncate"><?= htmlspecialchars($rel['name']) ?></div>
+                            <div class="text-pink small"><?= number_format($rel['price']) ?> đ</div>
+                        </div>
+                    </div>
+                </a>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<?php include 'layout/footer.php'; ?>
