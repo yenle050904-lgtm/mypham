@@ -1,6 +1,5 @@
 <?php 
-include 'layout/header.php'; 
-
+// ==================== XỬ LÝ TRƯỚC KHI XUẤT HTML ====================
 // Xử lý thêm, cập nhật số lượng, xóa
 if (isset($_GET['add'])) {
     $id = (int)$_GET['add'];
@@ -50,6 +49,8 @@ if (isset($_POST['update_cart'])) {
 }
 
 $cart_items = array_count_values($_SESSION['cart'] ?? []);
+
+include 'layout/header.php'; 
 ?>
 
 <div class="container py-5">
