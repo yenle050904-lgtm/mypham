@@ -75,7 +75,7 @@
                             <span><?= htmlspecialchars($_SESSION['user']) ?></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2 rounded-3 mt-2">
-                            <?php if ($_SESSION['user'] === 'admin'): ?>
+                            <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
                                 <li><a class="dropdown-item py-2" href="?page=admin_report"><i class="fa-solid fa-chart-line me-2"></i>Thống kê</a></li>
                                 <li><a class="dropdown-item py-2" href="?page=admin"><i class="fa-solid fa-box me-2"></i>Sản phẩm</a></li>
                                 <li><a class="dropdown-item py-2" href="?page=admin_orders"><i class="fa-solid fa-clipboard-list me-2"></i>Đơn hàng</a></li>
@@ -89,7 +89,7 @@
                         </ul>
                     </li>
                     
-                    <?php if ($_SESSION['user'] !== 'admin'): ?>
+                    <?php if (($_SESSION['role'] ?? '') !== 'admin'): ?>
                     <li class="nav-item ms-lg-2">
                         <a href="?page=cart" class="btn btn-cart-red position-relative rounded-pill px-3">
                             <i class="fa-solid fa-cart-shopping"></i>

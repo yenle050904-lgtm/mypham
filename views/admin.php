@@ -4,7 +4,7 @@ $success = '';
 $error = '';
 
 // Kiểm tra quyền admin
-if (!isset($_SESSION['user']) || $_SESSION['user'] !== 'admin') {
+if (($_SESSION['role'] ?? '') !== 'admin') {
     die('<div class="container py-5"><div class="alert alert-danger text-center">Bạn không có quyền truy cập trang Admin!</div></div>');
 }
 

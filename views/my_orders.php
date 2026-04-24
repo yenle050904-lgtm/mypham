@@ -1,6 +1,6 @@
 <?php
 // ==================== XỬ LÝ TRƯỚC KHI XUẤT HTML ====================
-if (!isset($_SESSION['user']) || $_SESSION['user'] === 'admin') {
+if (!isset($_SESSION['user']) || ($_SESSION['role'] ?? '') === 'admin') {
     header("Location: index.php");
     exit();
 }

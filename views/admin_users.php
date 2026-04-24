@@ -4,7 +4,7 @@ $success = '';
 $error = '';
 
 // Kiểm tra quyền admin
-if (!isset($_SESSION['user']) || $_SESSION['user'] !== 'admin') {
+if (($_SESSION['role'] ?? '') !== 'admin') {
     die('<div class="container py-5"><div class="alert alert-danger text-center">Bạn không có quyền truy cập trang Admin!</div></div>');
 }
 
@@ -13,12 +13,12 @@ if (isset($_GET['delete'])) {
     $id = (int)$_GET['delete'];
     
     // Lấy thông tin user trước (PDO)
-    $stmt = $conn->prepare("SELECT username FROM users WHERE id = ?");
+    $stmt = $conn->prepare("SELECT username, role FROM users WHERE id = ?");
     $stmt->execute([$id]);
     $u = $stmt->fetch();
 
     if ($u) {
-        if ($u['username'] === 'admin') {
+        if ($u['role'] === 'admin') {
             $error = "Không thể xóa tài khoản Admin hệ thống!";
         } else {
             $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
@@ -62,13 +62,13 @@ if (isset($_GET['delete'])) {
                             <td class="text-muted">#<?= $u['id'] ?></td>
                             <td class="fw-bold"><?= htmlspecialchars($u['username']) ?></td>
                             <td>
-                                <span class="badge bg-<?= ($u['username'] === 'admin') ? 'danger' : 'primary' ?>">
-                                    <?= ($u['username'] === 'admin') ? 'ADMIN' : 'USER' ?>
+                                <span class="badge bg-<?= ($u['role'] === 'admin') ? 'danger' : 'primary' ?>">
+                                    <?= strtoupper($u['role']) ?>
                                 </span>
                             </td>
                             <td class="text-center">
-                                <?php if ($u['username'] !== 'admin'): ?>
-                                    <a href="?page=admin_users&delete=<?= $u['id'] ?>" class="btn btn-sm btn-light text-danger" onclick="return confirm('⚠️ Xóa tài khoản này?')" title="Xóa">
+                                <?php if ($u['role'] !== 'admin'): ?>
+                                    <a href="?page=admin_users&delete=<?= $u['id'] ?>" class="btn btn-sm btn-light text-danger" onclick="return confirm('⚠️ Xoa tài khoản này?')" title="Xoa">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </a>
                                 <?php else: ?>

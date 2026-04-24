@@ -28,7 +28,7 @@ $user_row = $stmt_u->fetch();
 $current_user_id = $user_row['id'] ?? null;
 
 // Nếu không phải admin, kiểm tra xem có đúng là đơn hàng của mình không (dựa trên user_id)
-if ($_SESSION['user'] !== 'admin' && (int)$order['user_id'] !== (int)$current_user_id) {
+if (($_SESSION['role'] ?? '') !== 'admin' && (int)$order['user_id'] !== (int)$current_user_id) {
     die('<div class="container py-5"><div class="alert alert-danger text-center">Bạn không có quyền xem đơn hàng của người khác!</div></div>');
 }
 
@@ -41,7 +41,7 @@ $items = $stmt->fetchAll();
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-pink">📦 Chi tiết đơn hàng #<?= htmlspecialchars($order['order_code']) ?></h2>
-        <a href="?page=<?= $_SESSION['user'] === 'admin' ? 'admin_orders' : 'my_orders' ?>" class="btn btn-secondary">← Quay lại danh sách</a>
+        <a href="?page=<?= ($_SESSION['role'] ?? '') === 'admin' ? 'admin_orders' : 'my_orders' ?>" class="btn btn-secondary">← Quay lại danh sách</a>
     </div>
 
     <div class="row">
