@@ -21,6 +21,7 @@ if (isset($_GET['add'])) {
         $stmt = $conn->prepare("INSERT INTO wishlist (user_id, product_id) VALUES (?, ?)");
         $stmt->execute([$user_id, $product_id]);
         $_SESSION['flash_msg'] = "Đã thêm vào danh sách yêu thích!";
+        unset($_SESSION['wishlist_count']); // Để header query lại
     } catch (PDOException $e) {
         $_SESSION['flash_msg'] = "Sản phẩm đã có trong danh sách yêu thích.";
     }
@@ -32,6 +33,7 @@ if (isset($_GET['remove'])) {
     $stmt = $conn->prepare("DELETE FROM wishlist WHERE user_id = ? AND product_id = ?");
     $stmt->execute([$user_id, $product_id]);
     $_SESSION['flash_msg'] = "Đã xóa khỏi danh sách yêu thích.";
+    unset($_SESSION['wishlist_count']); // Để header query lại
 }
 
 // Lấy danh sách Wishlist
@@ -46,8 +48,6 @@ $wishlist = $stmt->fetchAll();
 
 <div class="container py-5">
     <h2 class="text-center mb-5 text-pink fw-bold"><i class="fa-solid fa-heart me-2"></i>Sản phẩm yêu thích</h2>
-
-    <?php if ($success): ?><div class="alert alert-success shadow-sm"><?= $success ?></div><?php endif; ?>
 
     <?php if (empty($wishlist)): ?>
         <div class="text-center py-5">

@@ -60,17 +60,24 @@
     $where_sql = " WHERE " . implode(" AND ", $where_clauses);
 
     $sort = $_GET['sort'] ?? 'newest';
-    $order_sql = " ORDER BY id DESC"; 
-    if ($sort === 'price_asc') $order_sql = " ORDER BY price ASC";
-    elseif ($sort === 'price_desc') $order_sql = " ORDER BY price DESC";
-    elseif ($sort === 'oldest') $order_sql = " ORDER BY id ASC";
+    $order_sql = " ORDER BY p.id DESC"; 
+    if ($sort === 'price_asc') $order_sql = " ORDER BY p.price ASC";
+    elseif ($sort === 'price_desc') $order_sql = " ORDER BY p.price DESC";
+    elseif ($sort === 'oldest') $order_sql = " ORDER BY p.id ASC";
+    elseif ($sort === 'top_rated') $order_sql = " ORDER BY avg_rating DESC, review_count DESC";
 
-    $stmt_count = $conn->prepare("SELECT COUNT(*) as total FROM products $where_sql");
+    $stmt_count = $conn->prepare("SELECT COUNT(*) as total FROM products p $where_sql");
     $stmt_count->execute($params);
     $total_products = $stmt_count->fetch()['total'] ?? 0;
     $total_pages = ceil($total_products / $limit);
 
-    $query = "SELECT * FROM products $where_sql $order_sql LIMIT $limit OFFSET $offset";
+    $query = "SELECT p.*, AVG(r.rating) as avg_rating, COUNT(r.id) as review_count 
+              FROM products p 
+              LEFT JOIN reviews r ON p.id = r.product_id 
+              $where_sql 
+              GROUP BY p.id 
+              $order_sql 
+              LIMIT $limit OFFSET $offset";
     $stmt = $conn->prepare($query);
     $stmt->execute($params);
     $products = $stmt->fetchAll();
@@ -106,6 +113,7 @@
                     <option value="newest" <?= $sort == 'newest' ? 'selected' : '' ?>>Mới nhất</option>
                     <option value="price_asc" <?= $sort == 'price_asc' ? 'selected' : '' ?>>Giá tăng dần</option>
                     <option value="price_desc" <?= $sort == 'price_desc' ? 'selected' : '' ?>>Giá giảm dần</option>
+                    <option value="top_rated" <?= $sort == 'top_rated' ? 'selected' : '' ?>>Đánh giá cao nhất</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -159,6 +167,21 @@
                     </div>
                     <div class="card-body text-center d-flex flex-column p-4">
                         <h6 class="text-truncate fw-bold mb-1"><?= htmlspecialchars($p['name']) ?></h6>
+                        
+                        <div class="mb-2">
+                            <?php if ($p['review_count'] > 0): ?>
+                                <div class="text-warning small">
+                                    <?php 
+                                    $rating = round($p['avg_rating']); 
+                                    for($i=1; $i<=5; $i++) echo ($i <= $rating) ? '<i class="fa-solid fa-star"></i>' : '<i class="fa-regular fa-star"></i>';
+                                    ?>
+                                    <span class="text-muted ms-1" style="font-size: 0.75rem;">(<?= $p['review_count'] ?>)</span>
+                                </div>
+                            <?php else: ?>
+                                <div class="text-muted small" style="font-size: 0.75rem;">Chưa có đánh giá</div>
+                            <?php endif; ?>
+                        </div>
+
                         <div class="mb-3">
                             <?php if($p['sale_price']): ?>
                                 <span class="text-pink fw-bold d-block"><?= number_format($p['sale_price']) ?> đ</span>

@@ -1,4 +1,30 @@
-<?php include 'layout/header.php'; ?>
+<?php
+$success = '';
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $fullname = trim($_POST['fullname'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $subject = trim($_POST['subject'] ?? '');
+    $message = trim($_POST['message'] ?? '');
+
+    if (empty($fullname) || empty($email) || empty($message)) {
+        $error = "Vui lòng điền đầy đủ các trường bắt buộc!";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Email không hợp lệ!";
+    } else {
+        $stmt = $conn->prepare("INSERT INTO contacts (fullname, email, phone, subject, message) VALUES (?, ?, ?, ?, ?)");
+        if ($stmt->execute([$fullname, $email, $phone, $subject, $message])) {
+            $success = "Cảm ơn bạn! Tin nhắn của bạn đã được gửi thành công.";
+        } else {
+            $error = "Có lỗi xảy ra, vui lòng thử lại sau.";
+        }
+    }
+}
+
+include 'layout/header.php'; 
+?>
 
 <div class="container py-5">
     <div class="text-center mb-5">
@@ -51,24 +77,32 @@
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 p-4">
                 <h5 class="fw-bold mb-4">Gửi tin nhắn cho chúng tôi</h5>
-                <form action="?page=home&msg=Cảm ơn bạn! Chúng tôi sẽ phản hồi sớm nhất." method="POST">
+                
+                <?php if ($success): ?><div class="alert alert-success shadow-sm"><?= $success ?></div><?php endif; ?>
+                <?php if ($error): ?><div class="alert alert-danger shadow-sm"><?= $error ?></div><?php endif; ?>
+
+                <form method="POST">
                     <?= csrf_input() ?>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Họ và tên</label>
-                            <input type="text" class="form-control" placeholder="Nguyễn Văn A" required>
+                            <input type="text" name="fullname" class="form-control" placeholder="Nguyễn Văn A" required value="<?= htmlspecialchars($_POST['fullname'] ?? '') ?>">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Email</label>
-                            <input type="email" class="form-control" placeholder="email@example.com" required>
+                            <input type="email" name="email" class="form-control" placeholder="email@example.com" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Số điện thoại (tùy chọn)</label>
+                            <input type="text" name="phone" class="form-control" placeholder="0123 456 789" value="<?= htmlspecialchars($_POST['phone'] ?? '') ?>">
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-bold">Tiêu đề</label>
-                            <input type="text" class="form-control" placeholder="Tôi cần tư vấn về..." required>
+                            <input type="text" name="subject" class="form-control" placeholder="Tôi cần tư vấn về..." required value="<?= htmlspecialchars($_POST['subject'] ?? '') ?>">
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-bold">Nội dung tin nhắn</label>
-                            <textarea class="form-control" rows="5" placeholder="Viết tin nhắn của bạn tại đây..." required></textarea>
+                            <textarea name="message" class="form-control" rows="5" placeholder="Viết tin nhắn của bạn tại đây..." required><?= htmlspecialchars($_POST['message'] ?? '') ?></textarea>
                         </div>
                         <div class="col-12 mt-4">
                             <button type="submit" class="btn btn-pink px-5 py-2 w-100 fs-5">Gửi ngay <i class="fa-solid fa-paper-plane ms-2"></i></button>

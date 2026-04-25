@@ -13,6 +13,7 @@ if (isset($_POST['login'])) {
     if ($user && verify_user_password($password, $user['password'], $username, $conn)) {
         $_SESSION['user'] = $user['username'];
         $_SESSION['role'] = $user['role'];
+        $_SESSION['user_id'] = $user['id'];
 
         // Trường hợp thêm sản phẩm từ trang chủ (chưa đăng nhập)
         if (isset($_GET['redirect']) && $_GET['redirect'] === 'add' && isset($_GET['product_id'])) {
