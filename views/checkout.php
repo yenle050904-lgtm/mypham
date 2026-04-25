@@ -34,13 +34,26 @@ if (isset($_POST['confirm_order'])) {
         if ($invalid_found) {
             $error = "Có sản phẩm trong giỏ hàng đã hết hàng hoặc không hợp lệ. Vui lòng quay lại giỏ hàng!";
         } else {
+            // Tính toán mã giảm giá nếu có
+            $discount = 0;
+            if (isset($_SESSION['coupon'])) {
+                $cp = $_SESSION['coupon'];
+                if ($cp['discount_type'] == 'percent') {
+                    $discount = ($total * $cp['discount_value']) / 100;
+                } else {
+                    $discount = $cp['discount_value'];
+                }
+            }
+            $final_total = max(0, $total - $discount);
+
             $_SESSION['last_order'] = [
                 'fullname' => $fullname,
                 'phone'    => $phone,
                 'address'  => $address,
-                'total'    => $total,
+                'total'    => $final_total,
+                'discount' => $discount,
                 'payment_method' => $_POST['payment_method'] ?? 'cod',
-                'cart'     => $cart_items // Lưu giỏ vào orders (logic checkout.php của bạn cần cái này)
+                'cart'     => $cart_items
             ];
 
             header("Location: ?page=order_success");
@@ -207,13 +220,28 @@ $def_address  = $u_info['address'] ?? '';
                                 <span>Tạm tính</span>
                                 <span><?= number_format($total) ?> đ</span>
                             </div>
+                            <?php 
+                            $discount = 0;
+                            if (isset($_SESSION['coupon'])): 
+                                $cp = $_SESSION['coupon'];
+                                if ($cp['discount_type'] == 'percent') {
+                                    $discount = ($total * $cp['discount_value']) / 100;
+                                } else {
+                                    $discount = $cp['discount_value'];
+                                }
+                            ?>
+                            <div class="d-flex justify-content-between mb-2 text-success fw-bold">
+                                <span>Giảm giá (<?= htmlspecialchars($cp['code']) ?>)</span>
+                                <span>-<?= number_format($discount) ?> đ</span>
+                            </div>
+                            <?php endif; ?>
                             <div class="d-flex justify-content-between mb-3 text-muted">
                                 <span>Phí giao hàng</span>
                                 <span class="text-success small">Miễn phí</span>
                             </div>
                             <div class="d-flex justify-content-between fs-4 pt-3 border-top">
                                 <span class="fw-bold">Tổng tiền</span>
-                                <span class="fw-bold text-pink"><?= number_format($total) ?> đ</span>
+                                <span class="fw-bold text-pink"><?= number_format($total - $discount) ?> đ</span>
                             </div>
                         </div>
                     </div>

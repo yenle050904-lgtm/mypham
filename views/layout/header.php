@@ -78,7 +78,10 @@
                             <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
                                 <li><a class="dropdown-item py-2" href="?page=admin_report"><i class="fa-solid fa-chart-line me-2"></i>Thống kê</a></li>
                                 <li><a class="dropdown-item py-2" href="?page=admin"><i class="fa-solid fa-box me-2"></i>Sản phẩm</a></li>
+                                <li><a class="dropdown-item py-2" href="?page=admin_categories"><i class="fa-solid fa-tags me-2"></i>Danh mục</a></li>
+                                <li><a class="dropdown-item py-2" href="?page=admin_coupons"><i class="fa-solid fa-ticket me-2"></i>Mã giảm giá</a></li>
                                 <li><a class="dropdown-item py-2" href="?page=admin_orders"><i class="fa-solid fa-clipboard-list me-2"></i>Đơn hàng</a></li>
+                                <li><a class="dropdown-item py-2" href="?page=admin_users"><i class="fa-solid fa-users me-2"></i>Người dùng</a></li>
                             <?php else: ?>
                                 <li><a class="dropdown-item py-2" href="?page=profile"><i class="fa-solid fa-user-pen me-2"></i>Hồ sơ cá nhân</a></li>
                                 <li><a class="dropdown-item py-2" href="?page=my_orders"><i class="fa-solid fa-bag-shopping me-2"></i>Đơn hàng của tôi</a></li>

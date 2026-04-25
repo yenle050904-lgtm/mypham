@@ -60,6 +60,55 @@ if (isset($_POST['update_cart'])) {
 
 $cart_items = array_count_values($_SESSION['cart'] ?? []);
 
+// --- XỬ LÝ MÃ GIẢM GIÁ (COUPON) ---
+$coupon_error = '';
+$coupon_success = '';
+
+// Tính tạm tính trước để kiểm tra min_order
+$subtotal_before_coupon = 0;
+foreach ($cart_items as $id => $qty) {
+    $stmt_p = $conn->prepare("SELECT price, status, stock FROM products WHERE id = ?");
+    $stmt_p->execute([$id]);
+    $p = $stmt_p->fetch();
+    if ($p && $p['status'] == 'active' && $p['stock'] >= $qty) {
+        $subtotal_before_coupon += $p['price'] * $qty;
+    }
+}
+
+if (isset($_POST['apply_coupon'])) {
+    $code = trim($_POST['coupon_code']);
+    $stmt = $conn->prepare("SELECT * FROM coupons WHERE code = ? AND is_active = 1");
+    $stmt->execute([$code]);
+    $coupon = $stmt->fetch();
+
+    if (!$coupon) {
+        $coupon_error = "Mã giảm giá không hợp lệ hoặc đã hết hạn!";
+        unset($_SESSION['coupon']);
+    } elseif ($coupon['used_count'] >= $coupon['max_uses'] && $coupon['max_uses'] > 0) {
+        $coupon_error = "Mã giảm giá này đã được sử dụng hết lượt!";
+        unset($_SESSION['coupon']);
+    } elseif ($subtotal_before_coupon < $coupon['min_order']) {
+        $coupon_error = "Đơn hàng tối thiểu " . number_format($coupon['min_order']) . " đ để áp dụng mã này!";
+        unset($_SESSION['coupon']);
+    } else {
+        $_SESSION['coupon'] = $coupon;
+        $coupon_success = "Áp dụng mã giảm giá thành công!";
+    }
+}
+
+if (isset($_POST['remove_coupon'])) {
+    unset($_SESSION['coupon']);
+    $coupon_success = "Đã xóa mã giảm giá.";
+}
+
+// Kiểm tra lại điều kiện min_order nếu giỏ hàng thay đổi
+if (isset($_SESSION['coupon'])) {
+    if ($subtotal_before_coupon < $_SESSION['coupon']['min_order']) {
+        unset($_SESSION['coupon']);
+        $coupon_error = "Giỏ hàng thay đổi, mã giảm giá không còn hiệu lực!";
+    }
+}
+
 include 'layout/header.php'; 
 ?>
 
@@ -149,6 +198,23 @@ include 'layout/header.php';
                             <span>Tạm tính</span>
                             <span><?= number_format($total) ?> đ</span>
                         </div>
+
+                        <?php 
+                        $discount = 0;
+                        if (isset($_SESSION['coupon'])): 
+                            $cp = $_SESSION['coupon'];
+                            if ($cp['discount_type'] == 'percent') {
+                                $discount = ($total * $cp['discount_value']) / 100;
+                            } else {
+                                $discount = $cp['discount_value'];
+                            }
+                        ?>
+                        <div class="d-flex justify-content-between mb-3 text-success fw-bold">
+                            <span>Giảm giá (<?= htmlspecialchars($cp['code']) ?>)</span>
+                            <span>-<?= number_format($discount) ?> đ</span>
+                        </div>
+                        <?php endif; ?>
+
                         <div class="d-flex justify-content-between mb-3 text-muted">
                             <span>Phí vận chuyển</span>
                             <span class="text-success">Miễn phí</span>
@@ -156,7 +222,27 @@ include 'layout/header.php';
                         <hr class="my-4">
                         <div class="d-flex justify-content-between mb-4">
                             <span class="fw-bold">Tổng cộng</span>
-                            <span class="fw-bold fs-3 text-pink"><?= number_format($total) ?> đ</span>
+                            <span class="fw-bold fs-3 text-pink"><?= number_format($total - $discount) ?> đ</span>
+                        </div>
+
+                        <!-- Mã giảm giá UI -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted">Mã giảm giá</label>
+                            <?php if (isset($_SESSION['coupon'])): ?>
+                                <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded-3 border">
+                                    <span class="text-pink fw-bold ms-2"><?= htmlspecialchars($_SESSION['coupon']['code']) ?></span>
+                                    <button type="submit" name="remove_coupon" class="btn btn-sm btn-light text-danger border-0">
+                                        <i class="fa-solid fa-xmark"></i> Xóa
+                                    </button>
+                                </div>
+                            <?php else: ?>
+                                <div class="input-group">
+                                    <input type="text" name="coupon_code" class="form-control border-0 bg-light" placeholder="Nhập mã...">
+                                    <button type="submit" name="apply_coupon" class="btn btn-dark btn-sm px-3">Áp dụng</button>
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($coupon_error): ?><div class="text-danger small mt-2 fs-7"><i class="fa-solid fa-circle-exclamation me-1"></i><?= $coupon_error ?></div><?php endif; ?>
+                            <?php if ($coupon_success): ?><div class="text-success small mt-2 fs-7"><i class="fa-solid fa-circle-check me-1"></i><?= $coupon_success ?></div><?php endif; ?>
                         </div>
                         
                         <?php if($has_invalid_product): ?>

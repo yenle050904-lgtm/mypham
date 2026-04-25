@@ -65,7 +65,14 @@ if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
     }
 }
 
-// Xóa dữ liệu tạm
+// Xóa dữ liệu tạm & Cập nhật coupon
+if (isset($_SESSION['coupon'])) {
+    $cp_id = $_SESSION['coupon']['id'];
+    $stmt_cp = $conn->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?");
+    $stmt_cp->execute([$cp_id]);
+    unset($_SESSION['coupon']);
+}
+
 unset($_SESSION['cart']);
 unset($_SESSION['last_order']);
 ?>
