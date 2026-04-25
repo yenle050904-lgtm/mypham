@@ -37,7 +37,7 @@ if (isset($_GET['remove'])) {
 // Lấy danh sách Wishlist
 $stmt = $conn->prepare("SELECT p.* FROM products p 
                         JOIN wishlist w ON p.id = w.product_id 
-                        WHERE w.user_id = ?");
+                        WHERE w.user_id = ? AND p.status != 'hidden'");
 $stmt->execute([$user_id]);
 $wishlist = $stmt->fetchAll();
 ?>
@@ -68,9 +68,6 @@ $wishlist = $stmt->fetchAll();
                             ?>
                             <img src="<?= $img_src ?>" class="card-img-top" alt="<?= htmlspecialchars($p['name']) ?>">
                         </a>
-                        <a href="?page=wishlist&remove=<?= $p['id'] ?>" class="position-absolute top-0 end-0 m-2 btn btn-sm btn-light rounded-circle text-danger shadow-sm">
-                            <i class="fa-solid fa-xmark"></i>
-                        </a>
                     </div>
                     <div class="card-body text-center d-flex flex-column">
                         <h6 class="text-truncate mb-2"><?= htmlspecialchars($p['name']) ?></h6>
@@ -81,6 +78,13 @@ $wishlist = $stmt->fetchAll();
                             <?php else: ?>
                                 <button class="btn btn-secondary btn-sm w-100 mb-2" disabled>Hết hàng</button>
                             <?php endif; ?>
+
+                            <div class="d-flex gap-1">
+                                <a href="?page=product_detail&id=<?= $p['id'] ?>" class="btn btn-outline-pink btn-sm flex-grow-1">Xem chi tiết</a>
+                                <a href="?page=wishlist&remove=<?= $p['id'] ?>" class="btn btn-light btn-sm text-danger" title="Xóa" onclick="return confirm('Xóa khỏi yêu thích?')">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
