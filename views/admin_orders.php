@@ -61,16 +61,35 @@ if (count($where_clauses) > 0) {
     $where_sql = " WHERE " . implode(" AND ", $where_clauses);
 }
 
-$query = "SELECT * FROM orders $where_sql ORDER BY id DESC";
+// --- XỬ LÝ PHÂN TRANG ---
+$per_page = 15;
+$current_page = isset($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
+$offset = ($current_page - 1) * $per_page;
+
+// Đếm tổng số đơn hàng theo bộ lọc
+$count_query = "SELECT COUNT(*) FROM orders $where_sql";
+$count_stmt = $conn->prepare($count_query);
+$count_stmt->execute($params);
+$total_items = $count_stmt->fetchColumn();
+$total_pages = ceil($total_items / $per_page);
+
+// Lấy danh sách cho trang hiện tại
+$query = "SELECT * FROM orders $where_sql ORDER BY id DESC LIMIT $per_page OFFSET $offset";
 $stmt = $conn->prepare($query);
 $stmt->execute($params);
 $orders = $stmt->fetchAll();
+
+// Xử lý query string cho các nút chuyển trang
+$query_params = $_GET;
+unset($query_params['p']); // Xóa p cũ để build lại
+$base_url = "?" . http_build_query($query_params);
 ?>
 
 <?php include 'layout/header.php'; ?>
 
 <div class="container py-5">
-    <h2 class="text-center mb-4 text-pink fw-bold font-elegant">📋 Quản lý Đơn hàng - Admin</h2>
+    <h2 class="text-center mb-1 text-pink fw-bold font-elegant">📋 Quản lý Đơn hàng - Admin</h2>
+    <p class="text-center text-muted mb-4 small">Tìm thấy tổng cộng <?= $total_items ?> đơn hàng</p>
 
     <?php if ($success): ?><div class="alert alert-success"><?= $success ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
@@ -188,6 +207,27 @@ $orders = $stmt->fetchAll();
                 </div>
             </div>
         </div>
+
+        <!-- Phân trang UI -->
+        <?php if ($total_pages > 1): ?>
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item <?= ($current_page <= 1) ? 'disabled' : '' ?>">
+                    <a class="page-link" href="<?= $base_url ?>&p=<?= $current_page - 1 ?>">Trước</a>
+                </li>
+                
+                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                <li class="page-item <?= ($i == $current_page) ? 'active' : '' ?>">
+                    <a class="page-link <?= ($i == $current_page) ? 'bg-pink border-pink' : '' ?>" href="<?= $base_url ?>&p=<?= $i ?>"><?= $i ?></a>
+                </li>
+                <?php endfor; ?>
+
+                <li class="page-item <?= ($current_page >= $total_pages) ? 'disabled' : '' ?>">
+                    <a class="page-link" href="<?= $base_url ?>&p=<?= $current_page + 1 ?>">Sau</a>
+                </li>
+            </ul>
+        </nav>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
 

@@ -80,6 +80,15 @@ if (isset($_GET['edit'])) {
     $stmt->execute([$id]);
     $edit = $stmt->fetch();
 }
+
+// --- XỬ LÝ PHÂN TRANG ---
+$per_page = 10;
+$current_page = isset($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
+$offset = ($current_page - 1) * $per_page;
+
+$total_stmt = $conn->query("SELECT COUNT(*) FROM products");
+$total_items = $total_stmt->fetchColumn();
+$total_pages = ceil($total_items / $per_page);
 ?>
 
 <?php include 'layout/header.php'; ?>
@@ -162,9 +171,15 @@ if (isset($_GET['edit'])) {
     </div>
 
     <!-- Danh sách sản phẩm -->
-    <h4 class="fw-bold mb-4 px-2"><i class="fa-solid fa-boxes-stacked me-2 text-pink"></i>Danh sách sản phẩm hiện tại</h4>
+    <h4 class="fw-bold mb-4 px-2 d-flex justify-content-between align-items-center">
+        <span><i class="fa-solid fa-boxes-stacked me-2 text-pink"></i>Danh sách sản phẩm</span>
+        <span class="small text-muted fw-normal">Tổng cộng: <?= $total_items ?> sản phẩm</span>
+    </h4>
     <?php
-    $res = $conn->query("SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC");
+    $res = $conn->prepare("SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC LIMIT ? OFFSET ?");
+    $res->bindValue(1, $per_page, PDO::PARAM_INT);
+    $res->bindValue(2, $offset, PDO::PARAM_INT);
+    $res->execute();
     ?>
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
@@ -222,6 +237,27 @@ if (isset($_GET['edit'])) {
             </div>
         </div>
     </div>
+
+    <!-- Phân trang UI -->
+    <?php if ($total_pages > 1): ?>
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item <?= ($current_page <= 1) ? 'disabled' : '' ?>">
+                <a class="page-link" href="?page=admin&p=<?= $current_page - 1 ?>">Trước</a>
+            </li>
+            
+            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+            <li class="page-item <?= ($i == $current_page) ? 'active' : '' ?>">
+                <a class="page-link <?= ($i == $current_page) ? 'bg-pink border-pink' : '' ?>" href="?page=admin&p=<?= $i ?>"><?= $i ?></a>
+            </li>
+            <?php endfor; ?>
+
+            <li class="page-item <?= ($current_page >= $total_pages) ? 'disabled' : '' ?>">
+                <a class="page-link" href="?page=admin&p=<?= $current_page + 1 ?>">Sau</a>
+            </li>
+        </ul>
+    </nav>
+    <?php endif; ?>
 </div>
 
 <?php include 'layout/footer.php'; ?>
