@@ -39,9 +39,22 @@ $items = $stmt->fetchAll();
 ?>
 
 <div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
         <h2 class="text-pink">📦 Chi tiết đơn hàng #<?= htmlspecialchars($order['order_code']) ?></h2>
-        <a href="?page=<?= ($_SESSION['role'] ?? '') === 'admin' ? 'admin_orders' : 'my_orders' ?>" class="btn btn-secondary">← Quay lại danh sách</a>
+        <div>
+            <button onclick="window.print()" class="btn btn-outline-success me-2">
+                <i class="fa-solid fa-print me-2"></i>In hóa đơn
+            </button>
+            <a href="?page=<?= ($_SESSION['role'] ?? '') === 'admin' ? 'admin_orders' : 'my_orders' ?>" class="btn btn-secondary">← Quay lại danh sách</a>
+        </div>
+    </div>
+
+    <!-- Tiêu đề chỉ hiện khi in -->
+    <div class="d-none d-print-block text-center mb-4">
+        <h1 class="fw-bold text-pink font-elegant">Mỹ Phẩm Xinh</h1>
+        <h3 class="fw-bold mt-2">HÓA ĐƠN MUA HÀNG</h3>
+        <p class="text-muted">Mã đơn: #<?= htmlspecialchars($order['order_code']) ?> | Ngày: <?= date('d/m/Y H:i') ?></p>
+        <hr>
     </div>
 
     <div class="row">
@@ -114,5 +127,45 @@ $items = $stmt->fetchAll();
         </div>
     </div>
 </div>
+
+<style>
+@media print {
+    .navbar, .footer, .d-print-none, .breadcrumb, .btn-secondary, footer, .badge {
+        display: none !important;
+    }
+    body {
+        background: white !important;
+        padding: 0 !important;
+    }
+    .container {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        margin-bottom: 20px !important;
+    }
+    .card-header {
+        background-color: #f8f9fa !important;
+        color: black !important;
+        border-bottom: 1px solid #dee2e6 !important;
+    }
+    .text-pink {
+        color: #e91e63 !important;
+    }
+    .table-pink {
+        background-color: #fff0f5 !important;
+    }
+    .row {
+        display: block !important;
+    }
+    .col-lg-5, .col-lg-7 {
+        width: 100% !important;
+    }
+}
+</style>
 
 <?php include 'layout/footer.php'; ?>

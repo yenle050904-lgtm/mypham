@@ -19,6 +19,7 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
     $stock  = (int)$_POST['stock'];
     $desc   = trim($_POST['description']);
     $status = $_POST['status'] ?? 'active';
+    $is_featured = isset($_POST['is_featured']) ? 1 : 0;
 
     if ($sale_price !== null && $sale_price >= $price) {
         $error = "Giá khuyến mãi phải nhỏ hơn giá gốc!";
@@ -48,21 +49,51 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
 
     if (empty($error)) {
         if (isset($_POST['add'])) {
-            $stmt = $conn->prepare("INSERT INTO products (name, price, sale_price, stock, image, category_id, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            if ($stmt->execute([$name, $price, $sale_price, $stock, $image_name, $cat, $desc, $status])) {
+            $stmt = $conn->prepare("INSERT INTO products (name, price, sale_price, is_featured, stock, image, category_id, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            if ($stmt->execute([$name, $price, $sale_price, $is_featured, $stock, $image_name, $cat, $desc, $status])) {
                 $success = "Thêm sản phẩm thành công!";
             } else {
                 $error = "Có lỗi xảy ra khi thêm sản phẩm.";
             }
         } else {
             $id = (int)$_POST['id'];
-            $stmt = $conn->prepare("UPDATE products SET name = ?, price = ?, sale_price = ?, stock = ?, image = ?, category_id = ?, description = ?, status = ? WHERE id = ?");
-            if ($stmt->execute([$name, $price, $sale_price, $stock, $image_name, $cat, $desc, $status, $id])) {
+            $stmt = $conn->prepare("UPDATE products SET name = ?, price = ?, sale_price = ?, is_featured = ?, stock = ?, image = ?, category_id = ?, description = ?, status = ? WHERE id = ?");
+            if ($stmt->execute([$name, $price, $sale_price, $is_featured, $stock, $image_name, $cat, $desc, $status, $id])) {
                 $success = "Cập nhật sản phẩm thành công!";
             } else {
                 $error = "Có lỗi xảy ra khi cập nhật sản phẩm.";
             }
         }
+
+        // Xử lý upload nhiều ảnh phụ (Gallery)
+        if (empty($error) && isset($_FILES['extra_images'])) {
+            $pid = isset($_POST['add']) ? $conn->lastInsertId() : (int)$_POST['id'];
+            foreach ($_FILES['extra_images']['tmp_name'] as $key => $tmp_name) {
+                if ($_FILES['extra_images']['error'][$key] == 0) {
+                    $ext = strtolower(pathinfo($_FILES['extra_images']['name'][$key], PATHINFO_EXTENSION));
+                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                        $new_extra_name = 'gallery_' . time() . '_' . uniqid() . '.' . $ext;
+                        if (move_uploaded_file($tmp_name, 'uploads/' . $new_extra_name)) {
+                            $stmt_extra = $conn->prepare("INSERT INTO product_images (product_id, image_name) VALUES (?, ?)");
+                            $stmt_extra->execute([$pid, $new_extra_name]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Xử lý xóa ảnh phụ
+if (isset($_GET['delete_img'])) {
+    $img_id = (int)$_GET['delete_img'];
+    $stmt_img = $conn->prepare("SELECT image_name FROM product_images WHERE id = ?");
+    $stmt_img->execute([$img_id]);
+    $img = $stmt_img->fetch();
+    if ($img) {
+        if (file_exists('uploads/' . $img['image_name'])) unlink('uploads/' . $img['image_name']);
+        $conn->prepare("DELETE FROM product_images WHERE id = ?")->execute([$img_id]);
+        $success = "Đã xóa ảnh phụ.";
     }
 }
 
@@ -141,6 +172,13 @@ $total_pages = ceil($total_items / $per_page);
                     </select>
                 </div>
 
+                <div class="col-md-2 d-flex align-items-center">
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" name="is_featured" id="is_featured" <?= (isset($edit['is_featured']) && $edit['is_featured']) ? 'checked' : '' ?>>
+                        <label class="form-check-label fw-medium" for="is_featured">Nổi bật</label>
+                    </div>
+                </div>
+
                 <div class="col-md-6">
                     <label class="form-label fw-medium">Danh mục</label>
                     <select name="category_id" class="form-select" required>
@@ -156,10 +194,32 @@ $total_pages = ceil($total_items / $per_page);
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label fw-medium">Ảnh sản phẩm (Tải lên file)</label>
+                    <label class="form-label fw-medium">Ảnh chính (Tải lên file)</label>
                     <input type="file" name="image" class="form-control" accept="image/png, image/jpeg, image/webp">
                     <?php if ($edit && $edit['image']): ?>
                         <div class="mt-2 small text-muted">Ảnh hiện tại: <?= htmlspecialchars($edit['image'] ?? '') ?></div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Ảnh phụ (Gallery - Chọn nhiều file)</label>
+                    <input type="file" name="extra_images[]" class="form-control" accept="image/png, image/jpeg, image/webp" multiple>
+                    <?php if ($edit): ?>
+                        <div class="mt-2 d-flex flex-wrap gap-2">
+                            <?php 
+                            $gallery = $conn->prepare("SELECT * FROM product_images WHERE product_id = ?");
+                            $gallery->execute([$edit['id']]);
+                            while($img = $gallery->fetch()):
+                            ?>
+                                <div class="position-relative">
+                                    <img src="uploads/<?= $img['image_name'] ?>" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                    <a href="?page=admin&edit=<?= $edit['id'] ?>&delete_img=<?= $img['id'] ?>" 
+                                       class="position-absolute top-0 end-0 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                       style="width: 18px; height: 18px; font-size: 10px; text-decoration: none;"
+                                       onclick="return confirm('Xóa ảnh này?')">×</a>
+                                </div>
+                            <?php endwhile; ?>
+                        </div>
                     <?php endif; ?>
                 </div>
                 
@@ -216,7 +276,12 @@ $total_pages = ceil($total_items / $per_page);
                                     <img src="<?= $img_src ?>" style="width:60px;height:60px;object-fit:cover;border-radius:12px;" alt="">
                                     <div>
                                         <div class="fw-bold"><?= htmlspecialchars($p['name']) ?></div>
-                                        <div class="text-muted small">ID: #<?= $p['id'] ?></div>
+                                        <div class="d-flex gap-2 align-items-center">
+                                            <span class="text-muted small">ID: #<?= $p['id'] ?></span>
+                                            <?php if($p['is_featured']): ?>
+                                                <span class="badge bg-danger rounded-pill" style="font-size: 0.6rem;">NỔI BẬT</span>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
                             </td>

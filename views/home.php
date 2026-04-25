@@ -84,6 +84,66 @@
     ?>
 
     <!-- Bộ lọc UI -->
+    <?php 
+    // Chỉ hiện section nổi bật khi không tìm kiếm/lọc
+    if (empty($_GET['search']) && empty($_GET['category_id']) && $current_page == 1): 
+        $stmt_featured = $conn->query("SELECT p.*, AVG(r.rating) as avg_rating, COUNT(r.id) as review_count 
+                                        FROM products p 
+                                        LEFT JOIN reviews r ON p.id = r.product_id 
+                                        WHERE p.is_featured = 1 AND p.status = 'active'
+                                        GROUP BY p.id 
+                                        LIMIT 4");
+        $featured_products = $stmt_featured->fetchAll();
+        
+        if ($featured_products):
+    ?>
+    <section class="featured-section mb-5 py-4 px-4 bg-light rounded-4">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h2 class="font-elegant text-pink fw-bold mb-0">Sản phẩm <span class="text-dark">nổi bật</span></h2>
+                <p class="text-muted small mb-0">Lựa chọn tinh tế nhất dành riêng cho bạn</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <?php foreach($featured_products as $f): ?>
+            <div class="col-lg-6 col-xl-3">
+                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden overflow-hidden hover-shadow transition-all bg-white">
+                    <div class="row g-0 h-100">
+                        <div class="col-5">
+                            <div class="h-100" style="background: url('<?= (file_exists('uploads/'.$f['image']) && !empty($f['image'])) ? 'uploads/'.$f['image'] : 'images/'.$f['image'] ?>') center/cover no-repeat;"></div>
+                        </div>
+                        <div class="col-7">
+                            <div class="card-body d-flex flex-column justify-content-center p-3">
+                                <span class="badge bg-pink-light text-pink align-self-start mb-2" style="font-size: 0.65rem;">NỔI BẬT</span>
+                                <h6 class="fw-bold text-truncate mb-1"><?= htmlspecialchars($f['name']) ?></h6>
+                                <div class="text-warning mb-2" style="font-size: 0.7rem;">
+                                    <?php 
+                                    $rating = round($f['avg_rating']); 
+                                    for($i=1; $i<=5; $i++) echo ($i <= $rating) ? '<i class="fa-solid fa-star"></i>' : '<i class="fa-regular fa-star"></i>';
+                                    ?>
+                                </div>
+                                <div class="mb-3">
+                                    <?php if($f['sale_price']): ?>
+                                        <span class="text-pink fw-bold d-block small"><?= number_format($f['sale_price']) ?> đ</span>
+                                        <span class="text-muted text-decoration-line-through" style="font-size: 0.7rem;"><?= number_format($f['price']) ?> đ</span>
+                                    <?php else: ?>
+                                        <span class="text-dark fw-bold d-block small"><?= number_format($f['price']) ?> đ</span>
+                                    <?php endif; ?>
+                                </div>
+                                <a href="?page=product_detail&id=<?= $f['id'] ?>" class="btn btn-sm btn-pink rounded-pill opacity-75">Xem ngay</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </section>
+    <?php 
+        endif;
+    endif; 
+    ?>
+
     <div class="filter-section mb-5 p-4 bg-white rounded-4 shadow-sm">
         <form action="index.php" method="GET" class="row g-3 align-items-end">
             <input type="hidden" name="page" value="home">

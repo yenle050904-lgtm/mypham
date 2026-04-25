@@ -101,7 +101,7 @@ if (isset($_POST['cancel_order'])) {
                                 </td>
                                 <td class="text-center py-3" data-label="Thao tác">
                                     <a href="?page=order_detail&id=<?= $o['id'] ?>" class="btn btn-sm btn-outline-info me-2">
-                                        <i class="fa-solid fa-eye me-1"></i>Chi tiết
+                                        <i class="fa-solid fa-print me-1"></i>Xem / In
                                     </a>
                                     
                                     <?php if ($o['status'] === 'Đang xử lý'): ?>

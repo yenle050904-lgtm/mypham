@@ -50,6 +50,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="?page=contact">Liên hệ</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="?page=track_order"><i class="fa-solid fa-truck-fast me-1"></i>Tra cứu</a>
+                </li>
             </ul>
             
             <form class="d-flex align-items-center mx-lg-4 my-2 my-lg-0" action="index.php" method="GET">

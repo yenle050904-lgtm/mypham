@@ -22,6 +22,19 @@ if (!$product) {
     die('<div class="container py-5"><div class="alert alert-danger">Sản phẩm không tồn tại hoặc đã bị ẩn!</div></div>');
 }
 
+// Lấy Gallery Ảnh phụ
+$stmt_gallery = $conn->prepare("SELECT * FROM product_images WHERE product_id = ? ORDER BY sort_order ASC, id ASC");
+$stmt_gallery->execute([$id]);
+$product_gallery = $stmt_gallery->fetchAll();
+
+// Xử lý Sản phẩm đã xem gần đây (Lưu vào session)
+if (!isset($_SESSION['recently_viewed'])) $_SESSION['recently_viewed'] = [];
+$current_history = $_SESSION['recently_viewed'];
+
+// Thêm sản phẩm vừa xem vào đầu danh sách (Xóa trùng và giới hạn 6)
+$current_history = array_values(array_unique(array_merge([$id], $current_history)));
+$_SESSION['recently_viewed'] = array_slice($current_history, 0, 7); // Giữ 7 để khi hiển thị trừ ra 1 vẫn được 6
+
 // 2. XỬ LÝ GỬI ĐÁNH GIÁ (REVIEW)
 $user_review = null;
 if (isset($_SESSION['user'])) {
@@ -92,21 +105,65 @@ $related_products = $stmt_rel->fetchAll();
     <div class="row">
         <!-- Hình ảnh sản phẩm -->
         <div class="col-lg-6">
-            <div class="position-relative">
-                <?php if($product['status'] == 'out_of_stock'): ?>
-                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded-4" style="background: rgba(0,0,0,0.3); z-index: 2;">
-                        <span class="badge bg-danger fs-4 px-4 py-2 shadow-lg">TẠM HẾT HÀNG</span>
-                    </div>
-                <?php endif; ?>
+            <div class="product-gallery">
+                <!-- Ảnh lớn chính -->
+                <div class="position-relative mb-3">
+                    <?php if($product['status'] == 'out_of_stock'): ?>
+                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded-4" style="background: rgba(0,0,0,0.3); z-index: 2;">
+                            <span class="badge bg-danger fs-4 px-4 py-2 shadow-lg">TẠM HẾT HÀNG</span>
+                        </div>
+                    <?php endif; ?>
 
-                <?php 
-                $img_src = (file_exists('uploads/' . $product['image']) && !empty($product['image'])) ? 'uploads/' . $product['image'] : 'images/' . $product['image'];
-                ?>
-                <img src="<?= $img_src ?>" 
-                     class="img-fluid rounded-4 shadow w-100" 
-                     alt="<?= htmlspecialchars($product['name']) ?>">
+                    <?php 
+                    $main_img = (file_exists('uploads/' . $product['image']) && !empty($product['image'])) ? 'uploads/' . $product['image'] : 'images/' . $product['image'];
+                    ?>
+                    <img id="mainImage" src="<?= $main_img ?>" 
+                         class="img-fluid rounded-4 shadow-sm w-100 transition-all" 
+                         style="aspect-ratio: 1/1; object-fit: cover;"
+                         alt="<?= htmlspecialchars($product['name']) ?>">
+                </div>
+
+                <!-- Dãy ảnh phụ (thumbnails) -->
+                <?php if (!empty($product_gallery)): ?>
+                <div class="row g-2">
+                    <div class="col-3">
+                        <img src="<?= $main_img ?>" 
+                             class="img-fluid rounded-3 border-pink cursor-pointer thumb-gallery active-thumb" 
+                             onclick="changeImage(this)"
+                             data-src="<?= $main_img ?>"
+                             style="aspect-ratio: 1/1; object-fit: cover;">
+                    </div>
+                    <?php foreach($product_gallery as $g): ?>
+                    <div class="col-3">
+                        <?php $g_src = 'uploads/' . $g['image_name']; ?>
+                        <img src="<?= $g_src ?>" 
+                             class="img-fluid rounded-3 cursor-pointer thumb-gallery" 
+                             onclick="changeImage(this)"
+                             data-src="<?= $g_src ?>"
+                             style="aspect-ratio: 1/1; object-fit: cover;">
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
+        
+        <script>
+        function changeImage(el) {
+            // Thay đổi ảnh lớn
+            const mainImg = document.getElementById('mainImage');
+            mainImg.src = el.getAttribute('data-src');
+            
+            // Cập nhật class active cho thumbnail
+            document.querySelectorAll('.thumb-gallery').forEach(t => t.classList.remove('active-thumb', 'border-pink'));
+            el.classList.add('active-thumb', 'border-pink');
+        }
+        </script>
+        <style>
+        .thumb-gallery { cursor: pointer; transition: all 0.3s; border: 2px solid transparent; opacity: 0.7; }
+        .thumb-gallery:hover { opacity: 1; border-color: #fce4ec; }
+        .active-thumb { opacity: 1; border-color: #e91e63 !important; }
+        </style>
 
         <!-- Thông tin chi tiết -->
         <div class="col-lg-6">
@@ -276,6 +333,38 @@ $related_products = $stmt_rel->fetchAll();
             <?php endif; ?>
         </div>
     </div>
+    <!-- SẢN PHẨM ĐÃ XEM GẦN ĐÂY -->
+    <?php 
+    $recent_ids = array_diff($_SESSION['recently_viewed'] ?? [], [$id]); // Trừ sản phẩm đang xem
+    if (!empty($recent_ids)):
+        $placeholders = implode(',', array_fill(0, count($recent_ids), '?'));
+        $stmt_recent = $conn->prepare("SELECT * FROM products WHERE id IN ($placeholders) AND status != 'hidden'");
+        $stmt_recent->execute(array_values($recent_ids));
+        $recent_products = $stmt_recent->fetchAll();
+        
+        if ($recent_products):
+    ?>
+    <div class="mt-5 pt-5 pb-4">
+        <h4 class="fw-bold mb-4 font-elegant text-pink border-bottom pb-2">Bạn đã xem <span class="text-dark">gần đây</span></h4>
+        <div class="row g-3">
+            <?php foreach($recent_products as $rp): ?>
+            <div class="col-lg-2 col-md-3 col-6">
+                <a href="?page=product_detail&id=<?= $rp['id'] ?>" class="text-decoration-none text-dark card h-100 border-0 shadow-sm transition-all hover-translate-y">
+                    <img src="<?= (file_exists('uploads/'.$rp['image']) && !empty($rp['image'])) ? 'uploads/'.$rp['image'] : 'images/'.$rp['image'] ?>" 
+                         class="card-img-top" style="aspect-ratio: 1/1; object-fit: cover;">
+                    <div class="card-body p-2 text-center">
+                        <div class="small fw-bold text-truncate mb-1"><?= htmlspecialchars($rp['name']) ?></div>
+                        <div class="text-pink small fw-bold"><?= number_format($rp['sale_price'] ?? $rp['price']) ?> đ</div>
+                    </div>
+                </a>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php 
+        endif;
+    endif; 
+    ?>
 </div>
 
 <?php include 'layout/footer.php'; ?>

@@ -135,6 +135,9 @@ unset($_SESSION['last_order']);
                         <a href="?page=my_orders" class="btn btn-pink px-5 py-3 rounded-pill shadow-sm">
                             <i class="fa-solid fa-clipboard-list me-2"></i>Xem đơn hàng
                         </a>
+                        <a href="?page=track_order&order_code=<?= $order_code ?>" class="btn btn-outline-pink px-5 py-3 rounded-pill">
+                            <i class="fa-solid fa-truck-fast me-2"></i>Tra cứu đơn sau này
+                        </a>
                         <a href="index.php" class="btn btn-outline-secondary px-5 py-3 rounded-pill">
                             <i class="fa-solid fa-bag-shopping me-2"></i>Tiếp tục mua sắm
                         </a>

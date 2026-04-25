@@ -28,6 +28,7 @@
                         <h6 class="fw-bold text-uppercase small mb-4">Liên kết</h6>
                         <ul class="list-unstyled">
                             <li class="mb-2"><a href="?page=home" class="text-decoration-none text-secondary">Trang chủ</a></li>
+                            <li class="mb-2"><a href="?page=track_order" class="text-decoration-none text-secondary">Tra cứu đơn hàng</a></li>
                             <li class="mb-2"><a href="?page=gioi_thieu" class="text-decoration-none text-secondary">Giới thiệu</a></li>
                             <li class="mb-2"><a href="?page=contact" class="text-decoration-none text-secondary">Liên hệ</a></li>
                         </ul>
