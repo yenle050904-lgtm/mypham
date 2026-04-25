@@ -84,6 +84,45 @@
     ?>
 
     <!-- Bộ lọc UI -->
+    <div class="filter-section mb-5 p-4 bg-white rounded-4 shadow-sm">
+        <form action="index.php" method="GET" class="row g-3 align-items-end">
+            <input type="hidden" name="page" value="home">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted">Danh mục</label>
+                <select name="category_id" class="form-select border-0 bg-light">
+                    <option value="">Tất cả danh mục</option>
+                    <?php
+                    $cats = $conn->query("SELECT * FROM categories ORDER BY name")->fetchAll();
+                    foreach($cats as $c):
+                        $sel = (isset($_GET['category_id']) && $_GET['category_id'] == $c['id']) ? 'selected' : '';
+                        echo "<option value='{$c['id']}' $sel>{$c['name']}</option>";
+                    endforeach;
+                    ?>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Khoảng giá</label>
+                <div class="input-group">
+                    <input type="number" name="min_price" class="form-control border-0 bg-light" placeholder="Từ" value="<?= htmlspecialchars($_GET['min_price'] ?? '') ?>">
+                    <input type="number" name="max_price" class="form-control border-0 bg-light" placeholder="Đến" value="<?= htmlspecialchars($_GET['max_price'] ?? '') ?>">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted">Sắp xếp</label>
+                <select name="sort" class="form-select border-0 bg-light">
+                    <option value="newest" <?= $sort == 'newest' ? 'selected' : '' ?>>Mới nhất</option>
+                    <option value="price_asc" <?= $sort == 'price_asc' ? 'selected' : '' ?>>Giá tăng dần</option>
+                    <option value="price_desc" <?= $sort == 'price_desc' ? 'selected' : '' ?>>Giá giảm dần</option>
+                    <option value="top_rated" <?= $sort == 'top_rated' ? 'selected' : '' ?>>Đánh giá cao nhất</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-pink w-100 py-2 rounded-3 shadow-sm">Lọc sản phẩm</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sản phẩm nổi bật -->
     <?php 
     // Chỉ hiện section nổi bật khi không tìm kiếm/lọc
     if (empty($_GET['search']) && empty($_GET['category_id']) && $page == 1): 
@@ -144,43 +183,6 @@
     endif; 
     ?>
 
-    <div class="filter-section mb-5 p-4 bg-white rounded-4 shadow-sm">
-        <form action="index.php" method="GET" class="row g-3 align-items-end">
-            <input type="hidden" name="page" value="home">
-            <div class="col-md-3">
-                <label class="form-label small fw-bold text-muted">Danh mục</label>
-                <select name="category_id" class="form-select border-0 bg-light">
-                    <option value="">Tất cả danh mục</option>
-                    <?php
-                    $cats = $conn->query("SELECT * FROM categories ORDER BY name")->fetchAll();
-                    foreach($cats as $c):
-                        $sel = (isset($_GET['category_id']) && $_GET['category_id'] == $c['id']) ? 'selected' : '';
-                        echo "<option value='{$c['id']}' $sel>{$c['name']}</option>";
-                    endforeach;
-                    ?>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label small fw-bold text-muted">Khoảng giá</label>
-                <div class="input-group">
-                    <input type="number" name="min_price" class="form-control border-0 bg-light" placeholder="Từ" value="<?= htmlspecialchars($_GET['min_price'] ?? '') ?>">
-                    <input type="number" name="max_price" class="form-control border-0 bg-light" placeholder="Đến" value="<?= htmlspecialchars($_GET['max_price'] ?? '') ?>">
-                </div>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label small fw-bold text-muted">Sắp xếp</label>
-                <select name="sort" class="form-select border-0 bg-light">
-                    <option value="newest" <?= $sort == 'newest' ? 'selected' : '' ?>>Mới nhất</option>
-                    <option value="price_asc" <?= $sort == 'price_asc' ? 'selected' : '' ?>>Giá tăng dần</option>
-                    <option value="price_desc" <?= $sort == 'price_desc' ? 'selected' : '' ?>>Giá giảm dần</option>
-                    <option value="top_rated" <?= $sort == 'top_rated' ? 'selected' : '' ?>>Đánh giá cao nhất</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-pink w-100 py-2 rounded-3 shadow-sm">Lọc sản phẩm</button>
-            </div>
-        </form>
-    </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4 px-2">
         <h3 class="fw-bold mb-0"><?= $title ?></h3>
