@@ -62,12 +62,6 @@ switch($page){
     case 'logout':
         include '../views/logout.php'; 
         break;
-    case '': 
-    case 'home': 
-    default: 
-        include '../views/home.php'; 
-        break;
-
     case 'checkout': 
         include '../views/checkout.php'; 
         break;
@@ -76,5 +70,13 @@ switch($page){
         break;
     case 'my_orders': 
         include '../views/my_orders.php'; 
+        break;
+    case '': 
+    case 'home': 
+        include '../views/home.php'; 
+        break;
+    default: 
+        http_response_code(404);
+        include '../views/404.php'; 
         break;
 }
