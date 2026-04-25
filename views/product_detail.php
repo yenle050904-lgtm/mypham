@@ -124,7 +124,15 @@ $related_products = $stmt_rel->fetchAll();
                 <span class="text-success small"><i class="fa-solid fa-check-circle me-1"></i>Chính hãng</span>
             </div>
 
-            <p class="text-pink fs-3 fw-bold mb-4"><?= number_format($product['price']) ?> đ</p>
+            <div class="mb-4">
+                <?php if($product['sale_price']): ?>
+                    <span class="text-pink fs-3 fw-bold me-2"><?= number_format($product['sale_price']) ?> đ</span>
+                    <span class="text-muted text-decoration-line-through fs-5"><?= number_format($product['price']) ?> đ</span>
+                    <span class="badge bg-danger ms-2">-<?= round(($product['price'] - $product['sale_price']) / $product['price'] * 100) ?>%</span>
+                <?php else: ?>
+                    <span class="text-pink fs-3 fw-bold"><?= number_format($product['price']) ?> đ</span>
+                <?php endif; ?>
+            </div>
 
             <div class="mb-4">
                 <?php if($product['status'] == 'active' && $product['stock'] > 0): ?>

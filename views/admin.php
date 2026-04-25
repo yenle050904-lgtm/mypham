@@ -14,10 +14,15 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
     
     $name   = trim($_POST['name']);
     $price  = (int)$_POST['price'];
+    $sale_price = ($_POST['sale_price'] !== '') ? (int)$_POST['sale_price'] : null;
     $cat    = (int)$_POST['category_id'];
     $stock  = (int)$_POST['stock'];
     $desc   = trim($_POST['description']);
     $status = $_POST['status'] ?? 'active';
+
+    if ($sale_price !== null && $sale_price >= $price) {
+        $error = "Giá khuyến mãi phải nhỏ hơn giá gốc!";
+    }
     
     $image_name = $_POST['current_image'] ?? '';
 
@@ -43,16 +48,16 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
 
     if (empty($error)) {
         if (isset($_POST['add'])) {
-            $stmt = $conn->prepare("INSERT INTO products (name, price, stock, image, category_id, description, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            if ($stmt->execute([$name, $price, $stock, $image_name, $cat, $desc, $status])) {
+            $stmt = $conn->prepare("INSERT INTO products (name, price, sale_price, stock, image, category_id, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            if ($stmt->execute([$name, $price, $sale_price, $stock, $image_name, $cat, $desc, $status])) {
                 $success = "Thêm sản phẩm thành công!";
             } else {
                 $error = "Có lỗi xảy ra khi thêm sản phẩm.";
             }
         } else {
             $id = (int)$_POST['id'];
-            $stmt = $conn->prepare("UPDATE products SET name = ?, price = ?, stock = ?, image = ?, category_id = ?, description = ?, status = ? WHERE id = ?");
-            if ($stmt->execute([$name, $price, $stock, $image_name, $cat, $desc, $status, $id])) {
+            $stmt = $conn->prepare("UPDATE products SET name = ?, price = ?, sale_price = ?, stock = ?, image = ?, category_id = ?, description = ?, status = ? WHERE id = ?");
+            if ($stmt->execute([$name, $price, $sale_price, $stock, $image_name, $cat, $desc, $status, $id])) {
                 $success = "Cập nhật sản phẩm thành công!";
             } else {
                 $error = "Có lỗi xảy ra khi cập nhật sản phẩm.";
@@ -117,6 +122,11 @@ $total_pages = ceil($total_items / $per_page);
                 <div class="col-md-2">
                     <label class="form-label fw-medium">Giá (VNĐ)</label>
                     <input name="price" type="number" class="form-control" value="<?= $edit['price'] ?? '' ?>" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-medium">Giá khuyến mãi</label>
+                    <input name="sale_price" type="number" class="form-control" value="<?= $edit['sale_price'] ?? '' ?>" placeholder="Để trống nếu không sale">
+                    <div class="form-text small">Phải < giá gốc.</div>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-medium">Số lượng tồn</label>
@@ -210,7 +220,14 @@ $total_pages = ceil($total_items / $per_page);
                                     </div>
                                 </div>
                             </td>
-                            <td class="fw-bold text-pink"><?= number_format($p['price']) ?> đ</td>
+                            <td class="fw-bold text-pink">
+                                <?php if($p['sale_price']): ?>
+                                    <div class="text-muted text-decoration-line-through small" style="font-size: 0.8rem;"><?= number_format($p['price']) ?> đ</div>
+                                    <div><?= number_format($p['sale_price']) ?> đ</div>
+                                <?php else: ?>
+                                    <?= number_format($p['price']) ?> đ
+                                <?php endif; ?>
+                            </td>
                             <td class="fw-bold"><?= $p['stock'] ?></td>
                             <td><span class="badge bg-light text-dark border"><?= htmlspecialchars($p['category_name'] ?? 'Chưa có') ?></span></td>
                             <td>

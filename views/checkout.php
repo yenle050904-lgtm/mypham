@@ -20,7 +20,7 @@ if (isset($_POST['confirm_order'])) {
         $invalid_found = false;
         
         foreach ($cart_items as $id => $qty) {
-            $stmt = $conn->prepare("SELECT price, status FROM products WHERE id = ?");
+            $stmt = $conn->prepare("SELECT price, sale_price, status FROM products WHERE id = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             
@@ -28,7 +28,8 @@ if (isset($_POST['confirm_order'])) {
                 $invalid_found = true;
                 break;
             }
-            $total += $row['price'] * $qty;
+            $effective_price = $row['sale_price'] ?? $row['price'];
+            $total += $effective_price * $qty;
         }
 
         if ($invalid_found) {
@@ -201,7 +202,8 @@ $def_address  = $u_info['address'] ?? '';
                                 $stmt->execute([$id]);
                                 $p = $stmt->fetch();
                                 if(!$p) continue;
-                                $subtotal = $p['price'] * $qty;
+                                $effective_price = $p['sale_price'] ?? $p['price'];
+                                $subtotal = $effective_price * $qty;
                                 $total += $subtotal;
                             ?>
                             <div class="d-flex align-items-center mb-3">
@@ -216,7 +218,7 @@ $def_address  = $u_info['address'] ?? '';
                                 </div>
                                 <div class="ms-3 flex-grow-1">
                                     <div class="small fw-bold text-truncate" style="max-width: 150px;"><?= htmlspecialchars($p['name']) ?></div>
-                                    <div class="small text-muted"><?= number_format($p['price']) ?> đ</div>
+                                    <div class="small text-muted"><?= number_format($effective_price) ?> đ</div>
                                 </div>
                                 <div class="ms-2 fw-bold small"><?= number_format($subtotal) ?> đ</div>
                             </div>

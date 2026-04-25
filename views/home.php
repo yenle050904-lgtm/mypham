@@ -128,8 +128,12 @@
                 <div class="card product-card h-100 border-0 shadow-sm transition-all hover-translate-y">
                     <div class="position-relative overflow-hidden rounded-top-4">
                         <?php if($p['status'] == 'out_of_stock'): ?>
-                            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-black bg-opacity-25" style="z-index:1 px-5">
+                            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-black bg-opacity-25" style="z-index:3">
                                 <span class="badge bg-danger">HẾT HÀNG</span>
+                            </div>
+                        <?php elseif($p['sale_price']): ?>
+                            <div class="position-absolute top-0 start-0 m-2" style="z-index:2">
+                                <span class="badge bg-danger shadow-sm">-<?= round(($p['price'] - $p['sale_price']) / $p['price'] * 100) ?>%</span>
                             </div>
                         <?php elseif($p['stock'] <= 5 && $p['stock'] > 0): ?>
                             <div class="position-absolute top-0 start-0 m-2" style="z-index:2">
@@ -154,8 +158,16 @@
                         <?php endif; ?>
                     </div>
                     <div class="card-body text-center d-flex flex-column p-4">
-                        <h6 class="text-truncate fw-bold mb-2"><?= htmlspecialchars($p['name']) ?></h6>
-                        <p class="text-pink fw-bold mb-3"><?= number_format($p['price']) ?> đ</p>
+                        <h6 class="text-truncate fw-bold mb-1"><?= htmlspecialchars($p['name']) ?></h6>
+                        <div class="mb-3">
+                            <?php if($p['sale_price']): ?>
+                                <span class="text-pink fw-bold d-block"><?= number_format($p['sale_price']) ?> đ</span>
+                                <span class="text-muted text-decoration-line-through small"><?= number_format($p['price']) ?> đ</span>
+                            <?php else: ?>
+                                <span class="text-pink fw-bold d-block"><?= number_format($p['price']) ?> đ</span>
+                                <span class="small text-white">&nbsp;</span> <!-- Giữ layout -->
+                            <?php endif; ?>
+                        </div>
                         
                         <div class="mt-auto">
                             <?php if ($p['status'] == 'active'): ?>

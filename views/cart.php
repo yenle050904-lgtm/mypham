@@ -150,7 +150,8 @@ include 'layout/header.php';
                         $is_over_stock = ($qty > $p['stock']);
                         if($is_out_of_stock || $is_over_stock) $has_invalid_product = true;
 
-                        $subtotal = $p['price'] * $qty;
+                        $effective_price = $p['sale_price'] ?? $p['price'];
+                        $subtotal = $effective_price * $qty;
                         $total += $subtotal;
                     ?>
                     <div class="card mb-3 shadow-sm border-0 <?= $is_out_of_stock ? 'opacity-50' : '' ?>">
@@ -164,7 +165,14 @@ include 'layout/header.php';
                                 </div>
                                 <div class="col">
                                     <h5 class="fw-bold mb-1"><?= htmlspecialchars($p['name']) ?></h5>
-                                    <p class="text-pink fw-bold mb-0"><?= number_format($p['price']) ?> đ</p>
+                                    <?php if($p['sale_price']): ?>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="text-pink fw-bold"><?= number_format($p['sale_price']) ?> đ</span>
+                                            <span class="text-muted text-decoration-line-through small"><?= number_format($p['price']) ?> đ</span>
+                                        </div>
+                                    <?php else: ?>
+                                        <p class="text-pink fw-bold mb-0"><?= number_format($p['price']) ?> đ</p>
+                                    <?php endif; ?>
                                     <?php if($is_out_of_stock): ?>
                                         <div class="text-danger small fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Sản phẩm tạm hết hàng - Vui lòng xóa</div>
                                     <?php elseif($is_over_stock): ?>

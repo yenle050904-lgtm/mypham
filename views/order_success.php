@@ -42,13 +42,15 @@ $order_id = $conn->lastInsertId();
 if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
     $cart_items = array_count_values($_SESSION['cart']);
     foreach ($cart_items as $p_id => $qty) {
-        $res = $conn->prepare("SELECT name, price FROM products WHERE id = ?");
+        $res = $conn->prepare("SELECT name, price, sale_price FROM products WHERE id = ?");
         $res->execute([$p_id]);
         $p = $res->fetch();
         if (!$p) continue;
+        
+        $effective_price = $p['sale_price'] ?? $p['price'];
 
         $stmt_item = $conn->prepare("INSERT INTO order_items (order_id, product_name, price, quantity) VALUES (?, ?, ?, ?)");
-        $stmt_item->execute([$order_id, $p['name'], $p['price'], $qty]);
+        $stmt_item->execute([$order_id, $p['name'], $effective_price, $qty]);
 
         // 3. TRỪ STOCK VÀ CẬP NHẬT TRẠNG THÁI (PDO)
         $stmt_stock = $conn->prepare("UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?");

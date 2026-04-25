@@ -71,7 +71,15 @@ $wishlist = $stmt->fetchAll();
                     </div>
                     <div class="card-body text-center d-flex flex-column">
                         <h6 class="text-truncate mb-2"><?= htmlspecialchars($p['name']) ?></h6>
-                        <p class="price mb-3"><?= number_format($p['price']) ?> đ</p>
+                        <div class="mb-3">
+                            <?php if($p['sale_price']): ?>
+                                <span class="text-pink fw-bold d-block"><?= number_format($p['sale_price']) ?> đ</span>
+                                <span class="text-muted text-decoration-line-through small"><?= number_format($p['price']) ?> đ</span>
+                            <?php else: ?>
+                                <span class="text-pink fw-bold d-block"><?= number_format($p['price']) ?> đ</span>
+                                <span class="small opacity-0">&nbsp;</span>
+                            <?php endif; ?>
+                        </div>
                         <div class="mt-auto">
                             <?php if ($p['status'] == 'active' && $p['stock'] > 0): ?>
                                 <a href="?page=cart&add=<?= $p['id'] ?>" class="btn btn-pink btn-sm w-100 mb-2">Thêm vào giỏ</a>
