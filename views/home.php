@@ -131,6 +131,10 @@
                             <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-black bg-opacity-25" style="z-index:1 px-5">
                                 <span class="badge bg-danger">HẾT HÀNG</span>
                             </div>
+                        <?php elseif($p['stock'] <= 5 && $p['stock'] > 0): ?>
+                            <div class="position-absolute top-0 start-0 m-2" style="z-index:2">
+                                <span class="badge bg-warning text-dark shadow-sm">Chỉ còn <?= $p['stock'] ?> sp</span>
+                            </div>
                         <?php endif; ?>
                         
                         <a href="?page=product_detail&id=<?= $p['id'] ?>">

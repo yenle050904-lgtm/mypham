@@ -15,6 +15,7 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
     $name   = trim($_POST['name']);
     $price  = (int)$_POST['price'];
     $cat    = (int)$_POST['category_id'];
+    $stock  = (int)$_POST['stock'];
     $desc   = trim($_POST['description']);
     $status = $_POST['status'] ?? 'active';
     
@@ -42,16 +43,16 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
 
     if (empty($error)) {
         if (isset($_POST['add'])) {
-            $stmt = $conn->prepare("INSERT INTO products (name, price, image, category_id, description, status) VALUES (?, ?, ?, ?, ?, ?)");
-            if ($stmt->execute([$name, $price, $image_name, $cat, $desc, $status])) {
+            $stmt = $conn->prepare("INSERT INTO products (name, price, stock, image, category_id, description, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            if ($stmt->execute([$name, $price, $stock, $image_name, $cat, $desc, $status])) {
                 $success = "Thêm sản phẩm thành công!";
             } else {
                 $error = "Có lỗi xảy ra khi thêm sản phẩm.";
             }
         } else {
             $id = (int)$_POST['id'];
-            $stmt = $conn->prepare("UPDATE products SET name = ?, price = ?, image = ?, category_id = ?, description = ?, status = ? WHERE id = ?");
-            if ($stmt->execute([$name, $price, $image_name, $cat, $desc, $status, $id])) {
+            $stmt = $conn->prepare("UPDATE products SET name = ?, price = ?, stock = ?, image = ?, category_id = ?, description = ?, status = ? WHERE id = ?");
+            if ($stmt->execute([$name, $price, $stock, $image_name, $cat, $desc, $status, $id])) {
                 $success = "Cập nhật sản phẩm thành công!";
             } else {
                 $error = "Có lỗi xảy ra khi cập nhật sản phẩm.";
@@ -104,16 +105,20 @@ if (isset($_GET['edit'])) {
                     <label class="form-label fw-medium">Tên sản phẩm</label>
                     <input name="name" class="form-control" value="<?= htmlspecialchars($edit['name'] ?? '') ?>" placeholder="VD: Son Dior" required>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label fw-medium">Giá (VNĐ)</label>
                     <input name="price" type="number" class="form-control" value="<?= $edit['price'] ?? '' ?>" required>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label class="form-label fw-medium">Số lượng tồn</label>
+                    <input name="stock" type="number" class="form-control" value="<?= $edit['stock'] ?? '0' ?>" required min="0">
+                </div>
+                <div class="col-md-2">
                     <label class="form-label fw-medium">Trạng thái</label>
                     <select name="status" class="form-select">
-                        <option value="active" <?= (isset($edit['status']) && $edit['status'] == 'active') ? 'selected' : '' ?>>Đang bán (Active)</option>
-                        <option value="out_of_stock" <?= (isset($edit['status']) && $edit['status'] == 'out_of_stock') ? 'selected' : '' ?>>Hết hàng (Out of Stock)</option>
-                        <option value="hidden" <?= (isset($edit['status']) && $edit['status'] == 'hidden') ? 'selected' : '' ?>>Ẩn (Hidden)</option>
+                        <option value="active" <?= (isset($edit['status']) && $edit['status'] == 'active') ? 'selected' : '' ?>>Đang bán</option>
+                        <option value="out_of_stock" <?= (isset($edit['status']) && $edit['status'] == 'out_of_stock') ? 'selected' : '' ?>>Hết hàng</option>
+                        <option value="hidden" <?= (isset($edit['status']) && $edit['status'] == 'hidden') ? 'selected' : '' ?>>Ẩn</option>
                     </select>
                 </div>
 
@@ -169,6 +174,7 @@ if (isset($_GET['edit'])) {
                         <tr>
                             <th class="ps-4">Sản phẩm</th>
                             <th>Giá</th>
+                            <th>Kho</th>
                             <th>Danh mục</th>
                             <th>Trạng thái</th>
                             <th class="text-center">Thao tác</th>
@@ -190,6 +196,7 @@ if (isset($_GET['edit'])) {
                                 </div>
                             </td>
                             <td class="fw-bold text-pink"><?= number_format($p['price']) ?> đ</td>
+                            <td class="fw-bold"><?= $p['stock'] ?></td>
                             <td><span class="badge bg-light text-dark border"><?= htmlspecialchars($p['category_name'] ?? 'Chưa có') ?></span></td>
                             <td>
                                 <?php if($p['status'] == 'active'): ?>

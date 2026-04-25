@@ -49,6 +49,19 @@ if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
 
         $stmt_item = $conn->prepare("INSERT INTO order_items (order_id, product_name, price, quantity) VALUES (?, ?, ?, ?)");
         $stmt_item->execute([$order_id, $p['name'], $p['price'], $qty]);
+
+        // 3. TRỪ STOCK VÀ CẬP NHẬT TRẠNG THÁI (PDO)
+        $stmt_stock = $conn->prepare("UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?");
+        $stmt_stock->execute([$qty, $p_id, $qty]);
+
+        // Kiểm tra nếu hết hàng thì đổi status
+        $stmt_check = $conn->prepare("SELECT stock FROM products WHERE id = ?");
+        $stmt_check->execute([$p_id]);
+        $current_stock = $stmt_check->fetch()['stock'];
+        if ($current_stock <= 0) {
+            $stmt_status = $conn->prepare("UPDATE products SET status = 'out_of_stock' WHERE id = ?");
+            $stmt_status->execute([$p_id]);
+        }
     }
 }
 

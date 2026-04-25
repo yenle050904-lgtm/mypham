@@ -124,9 +124,12 @@ $related_products = $stmt_rel->fetchAll();
             <p class="text-pink fs-3 fw-bold mb-4"><?= number_format($product['price']) ?> đ</p>
 
             <div class="mb-4">
-                <?php if($product['status'] == 'active'): ?>
+                <?php if($product['status'] == 'active' && $product['stock'] > 0): ?>
                     <span class="badge bg-success fs-6"><i class="fa-solid fa-check me-1"></i> Sẵn sàng giao hàng</span>
-                <?php elseif($product['status'] == 'out_of_stock'): ?>
+                    <?php if($product['stock'] <= 5): ?>
+                        <span class="badge bg-warning text-dark fs-6 ms-2"><i class="fa-solid fa-fire me-1"></i> Chỉ còn <?= $product['stock'] ?> sản phẩm cuối cùng!</span>
+                    <?php endif; ?>
+                <?php else: ?>
                     <span class="badge bg-danger fs-6"><i class="fa-solid fa-xmark me-1"></i> Tạm hết hàng</span>
                 <?php endif; ?>
             </div>
@@ -137,7 +140,7 @@ $related_products = $stmt_rel->fetchAll();
 
             <div class="d-flex gap-3">
                 <div class="flex-grow-1">
-                    <?php if ($product['status'] == 'active'): ?>
+                    <?php if ($product['status'] == 'active' && $product['stock'] > 0): ?>
                         <a href="?page=cart&add=<?= $product['id'] ?>" class="btn btn-pink btn-lg w-100 py-3 shadow-sm">
                             <i class="fa-solid fa-cart-plus me-2"></i>Thêm vào giỏ hàng
                         </a>

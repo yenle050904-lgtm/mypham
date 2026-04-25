@@ -4,19 +4,28 @@
 if (isset($_GET['add'])) {
     $id = (int)$_GET['add'];
     
-    // Kiểm tra hàng còn không mới cho thêm
-    $stmt = $conn->prepare("SELECT status FROM products WHERE id = ?");
+    // Kiểm tra hàng còn không và stock > 0 mới cho thêm
+    $stmt = $conn->prepare("SELECT status, stock FROM products WHERE id = ?");
     $stmt->execute([$id]);
     $p = $stmt->fetch();
     
-    if ($p && $p['status'] == 'active') {
+    // Đếm số lượng sản phẩm này hiện có trong giỏ
+    $current_qty = 0;
+    if (isset($_SESSION['cart'])) {
+        foreach ($_SESSION['cart'] as $item_id) {
+            if ($item_id == $id) $current_qty++;
+        }
+    }
+
+    if ($p && $p['status'] == 'active' && $p['stock'] > $current_qty) {
         if (!isset($_SESSION['cart'])) $_SESSION['cart'] = [];
         $_SESSION['cart'][] = $id;
         $_SESSION['flash_msg'] = "Đã thêm sản phẩm vào giỏ hàng!";
         header("Location: ?page=cart");
         exit();
     } else {
-        echo "<script>alert('Sản phẩm này đã hết hàng hoặc không còn kinh doanh!'); window.location='?page=home';</script>";
+        $msg = ($p && $p['stock'] <= $current_qty) ? 'Sản phẩm này đã đạt giới hạn tồn kho!' : 'Sản phẩm này đã hết hàng hoặc không còn kinh doanh!';
+        echo "<script>alert('$msg'); window.location='?page=home';</script>";
         exit();
     }
 }
@@ -34,13 +43,14 @@ if (isset($_POST['update_cart'])) {
         $qty = (int)$qty;
         if ($qty <= 0) continue; // Ngăn chặn số lượng <= 0
 
-        // Kiểm tra lại trạng thái sản phẩm
-        $stmt = $conn->prepare("SELECT status FROM products WHERE id = ?");
+        // Kiểm tra lại trạng thái sản phẩm và tồn kho
+        $stmt = $conn->prepare("SELECT status, stock FROM products WHERE id = ?");
         $stmt->execute([$id]);
         $p = $stmt->fetch();
         
         if ($p && $p['status'] == 'active') {
-            for ($i = 0; $i < $qty; $i++) {
+            $final_qty = min($qty, $p['stock']);
+            for ($i = 0; $i < $final_qty; $i++) {
                 $_SESSION['cart'][] = (int)$id;
             }
         }
@@ -80,8 +90,9 @@ include 'layout/header.php';
                         $p = $stmt->fetch();
                         if (!$p) continue;
                         
-                        $is_out_of_stock = ($p['status'] != 'active');
-                        if($is_out_of_stock) $has_invalid_product = true;
+                        $is_out_of_stock = ($p['status'] != 'active' || $p['stock'] <= 0);
+                        $is_over_stock = ($qty > $p['stock']);
+                        if($is_out_of_stock || $is_over_stock) $has_invalid_product = true;
 
                         $subtotal = $p['price'] * $qty;
                         $total += $subtotal;
@@ -100,6 +111,8 @@ include 'layout/header.php';
                                     <p class="text-pink fw-bold mb-0"><?= number_format($p['price']) ?> đ</p>
                                     <?php if($is_out_of_stock): ?>
                                         <div class="text-danger small fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Sản phẩm tạm hết hàng - Vui lòng xóa</div>
+                                    <?php elseif($is_over_stock): ?>
+                                        <div class="text-warning small fw-bold"><i class="fa-solid fa-circle-exclamation me-1"></i>Vượt quá tồn kho (Hiện có: <?= $p['stock'] ?>)</div>
                                     <?php endif; ?>
                                 </div>
                                 <div class="col-auto d-flex align-items-center gap-2">

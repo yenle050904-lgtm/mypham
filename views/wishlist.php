@@ -76,7 +76,11 @@ $wishlist = $stmt->fetchAll();
                         <h6 class="text-truncate mb-2"><?= htmlspecialchars($p['name']) ?></h6>
                         <p class="price mb-3"><?= number_format($p['price']) ?> đ</p>
                         <div class="mt-auto">
-                            <a href="?page=cart&add=<?= $p['id'] ?>" class="btn btn-pink btn-sm w-100 mb-2">Thêm vào giỏ</a>
+                            <?php if ($p['status'] == 'active' && $p['stock'] > 0): ?>
+                                <a href="?page=cart&add=<?= $p['id'] ?>" class="btn btn-pink btn-sm w-100 mb-2">Thêm vào giỏ</a>
+                            <?php else: ?>
+                                <button class="btn btn-secondary btn-sm w-100 mb-2" disabled>Hết hàng</button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
