@@ -86,7 +86,7 @@
     <!-- Bộ lọc UI -->
     <?php 
     // Chỉ hiện section nổi bật khi không tìm kiếm/lọc
-    if (empty($_GET['search']) && empty($_GET['category_id']) && $current_page == 1): 
+    if (empty($_GET['search']) && empty($_GET['category_id']) && $page == 1): 
         $stmt_featured = $conn->query("SELECT p.*, AVG(r.rating) as avg_rating, COUNT(r.id) as review_count 
                                         FROM products p 
                                         LEFT JOIN reviews r ON p.id = r.product_id 
