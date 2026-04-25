@@ -2,21 +2,33 @@
 
 <!-- Hero Banner -->
 <?php if (!isset($_GET['search']) && !isset($_GET['category_id']) && !isset($_GET['min_price'])): ?>
-<div class="hero-banner">
-    <div class="container">
-        <div class="hero-content mx-auto text-center">
-            <span class="badge bg-pink mb-3 px-4 py-2 fs-6">Mỹ Phẩm Cao Cấp</span>
-            <h1 class="font-elegant">Khám Phá Vẻ Đẹp Của Bạn</h1>
-            <p>Khám phá bộ sưu tập mỹ phẩm chính hãng giúp chăm sóc và nâng tầm vẻ đẹp tự nhiên của bạn mỗi ngày.</p>
-            
-            <div class="d-flex gap-3 justify-content-center">
-                <a href="#products" class="btn btn-pink btn-lg px-5">
-                    <i class="fa-solid fa-bag-shopping me-2"></i>Mua sắm ngay
-                </a>
+    <?php 
+    // Query banner active
+    $stmt_b = $conn->query("SELECT * FROM banners WHERE is_active = 1 ORDER BY sort_order ASC LIMIT 1");
+    $banner = $stmt_b->fetch();
+    
+    // Mặc định nếu không có banner từ DB
+    $b_title    = $banner['title'] ?? 'Khám Phá Vẻ Đẹp Của Bạn';
+    $b_subtitle = $banner['subtitle'] ?? 'Khám phá bộ sưu tập mỹ phẩm chính hãng giúp chăm sóc và nâng tầm vẻ đẹp tự nhiên của bạn mỗi ngày.';
+    $b_btn_text = $banner['button_text'] ?? 'Mua sắm ngay';
+    $b_btn_link = $banner['button_link'] ?? '#products';
+    $b_bg       = (isset($banner['image_bg']) && $banner['image_bg']) ? "url('uploads/" . $banner['image_bg'] . "')" : "none";
+    ?>
+    <div class="hero-banner" style="background-image: <?= $b_bg ?>; background-size: cover; background-position: center;">
+        <div class="container">
+            <div class="hero-content mx-auto text-center">
+                <span class="badge bg-pink mb-3 px-4 py-2 fs-6">Mỹ Phẩm Cao Cấp</span>
+                <h1 class="font-elegant"><?= htmlspecialchars($b_title) ?></h1>
+                <p><?= htmlspecialchars($b_subtitle) ?></p>
+                
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="<?= htmlspecialchars($b_btn_link) ?>" class="btn btn-pink btn-lg px-5">
+                        <i class="fa-solid fa-bag-shopping me-2"></i><?= htmlspecialchars($b_btn_text) ?>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-</div>
 <?php endif; ?>
 
 <div class="container py-5" id="products">

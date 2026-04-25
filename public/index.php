@@ -26,6 +26,9 @@ switch($page){
     case 'admin_orders': 
         include '../views/admin_orders.php'; 
         break;
+    case 'admin_banners': 
+        include '../views/admin_banners.php'; 
+        break;
     case 'track_order': 
         include '../views/track_order.php'; 
         break;

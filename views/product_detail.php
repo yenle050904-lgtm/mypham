@@ -66,6 +66,30 @@ if (isset($_SESSION['user'])) {
             }
         }
     }
+
+    // Xử lý Xóa Review
+    if (isset($_GET['delete_review'])) {
+        $rid = (int)$_GET['delete_review'];
+        $stmt_del = $conn->prepare("DELETE FROM reviews WHERE id = ? AND user_id = ?");
+        if ($stmt_del->execute([$rid, $u_id])) {
+            $_SESSION['flash_msg'] = "Đã xóa đánh giá của bạn.";
+            header("Location: index.php?page=product_detail&id=$id");
+            exit;
+        }
+    }
+
+    // Xử lý Sửa Review
+    if (isset($_POST['edit_review'])) {
+        $rid = (int)$_POST['review_id'];
+        $rating = (int)$_POST['rating'];
+        $comment = trim($_POST['comment']);
+        $stmt_upd = $conn->prepare("UPDATE reviews SET rating = ?, comment = ? WHERE id = ? AND user_id = ?");
+        if ($stmt_upd->execute([$rating, $comment, $rid, $u_id])) {
+            $_SESSION['flash_msg'] = "Đã cập nhật đánh giá.";
+            header("Location: index.php?page=product_detail&id=$id");
+            exit;
+        }
+    }
 }
 
 // 3. LẤY DANH SÁCH ĐÁNH GIÁ
@@ -331,15 +355,57 @@ $related_products = $stmt_rel->fetchAll();
                     <div class="ms-3 flex-grow-1">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <h6 class="fw-bold mb-0"><?= htmlspecialchars($r['username']) ?></h6>
-                            <small class="text-muted"><?= date('d/m/Y', strtotime($r['created_at'])) ?></small>
+                            <div class="d-flex align-items-center gap-3">
+                                <small class="text-muted"><?= date('d/m/Y', strtotime($r['created_at'])) ?></small>
+                                <?php if (isset($u_id) && $r['user_id'] == $u_id): ?>
+                                    <div class="review-actions">
+                                        <button onclick="toggleEditReview(<?= $r['id'] ?>)" class="btn btn-link btn-sm p-0 text-warning text-decoration-none small">Sửa</button>
+                                        <a href="?page=product_detail&id=<?= $id ?>&delete_review=<?= $r['id'] ?>" 
+                                           class="btn btn-link btn-sm p-0 text-danger text-decoration-none small ms-2"
+                                           onclick="return confirm('Xóa đánh giá này?')">Xóa</a>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <div class="text-warning small mb-2">
                             <?php for($i=1; $i<=5; $i++) echo $i <= $r['rating'] ? '★' : '☆'; ?>
                         </div>
-                        <p class="mb-0 text-dark small"><?= nl2br(htmlspecialchars($r['comment'])) ?></p>
+                        <p class="mb-0 text-dark small" id="review-text-<?= $r['id'] ?>"><?= nl2br(htmlspecialchars($r['comment'])) ?></p>
+                        
+                        <?php if (isset($u_id) && $r['user_id'] == $u_id): ?>
+                            <!-- Form Sửa Review -->
+                            <div id="edit-form-<?= $r['id'] ?>" class="d-none mt-3 p-3 bg-light rounded-3 border">
+                                <form method="POST">
+                                    <?= csrf_input() ?>
+                                    <input type="hidden" name="review_id" value="<?= $r['id'] ?>">
+                                    <div class="mb-2">
+                                        <label class="small fw-bold">Chọn lại số sao:</label>
+                                        <select name="rating" class="form-select form-select-sm" style="width: 150px;">
+                                            <?php for($i=5; $i>=1; $i--): ?>
+                                                <option value="<?= $i ?>" <?= $i == $r['rating'] ? 'selected' : '' ?>><?= $i ?> sao</option>
+                                            <?php endfor; ?>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <textarea name="comment" class="form-control form-control-sm" rows="2"><?= htmlspecialchars($r['comment']) ?></textarea>
+                                    </div>
+                                    <button type="submit" name="edit_review" class="btn btn-pink btn-sm px-3">Lưu</button>
+                                    <button type="button" onclick="toggleEditReview(<?= $r['id'] ?>)" class="btn btn-light btn-sm px-3 ms-1">Hủy</button>
+                                </form>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <?php endforeach; ?>
+                
+                <script>
+                function toggleEditReview(id) {
+                    const form = document.getElementById('edit-form-' + id);
+                    const text = document.getElementById('review-text-' + id);
+                    form.classList.toggle('d-none');
+                    text.classList.toggle('d-none');
+                }
+                </script>
             <?php endif; ?>
         </div>
 

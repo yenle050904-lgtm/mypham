@@ -158,6 +158,7 @@
                                 <li><a class="dropdown-item py-2" href="?page=admin_report"><i class="fa-solid fa-chart-line me-2"></i>Thống kê</a></li>
                                 <li><a class="dropdown-item py-2" href="?page=admin"><i class="fa-solid fa-box me-2"></i>Sản phẩm</a></li>
                                 <li><a class="dropdown-item py-2" href="?page=admin_categories"><i class="fa-solid fa-tags me-2"></i>Danh mục</a></li>
+                                <li><a class="dropdown-item py-2" href="?page=admin_banners"><i class="fa-solid fa-panorama me-2"></i>Banner</a></li>
                                 <li><a class="dropdown-item py-2" href="?page=admin_coupons"><i class="fa-solid fa-ticket me-2"></i>Mã giảm giá</a></li>
                                 <li><a class="dropdown-item py-2" href="?page=admin_orders"><i class="fa-solid fa-clipboard-list me-2"></i>Đơn hàng</a></li>
                                 <li>
