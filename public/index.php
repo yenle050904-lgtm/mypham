@@ -50,6 +50,9 @@ switch($page){
     case 'admin_contacts': 
         include '../views/admin_contacts.php'; 
         break;
+    case 'search_suggest': 
+        include '../views/search_suggest.php'; 
+        exit();
     case 'export_orders': 
         include '../views/export_orders.php'; 
         exit(); 

@@ -226,6 +226,39 @@ $related_products = $stmt_rel->fetchAll();
                     </a>
                 <?php endif; ?>
             </div>
+
+            <!-- Social Share -->
+            <div class="mt-4 d-flex align-items-center gap-3 py-3 border-top border-bottom border-light">
+                <span class="small fw-bold text-muted text-uppercase">Chia sẻ:</span>
+                <?php 
+                $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+                $encoded_url = urlencode($current_url);
+                ?>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=<?= $encoded_url ?>" 
+                   target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary rounded-circle" title="Facebook">
+                    <i class="fa-brands fa-facebook-f p-1"></i>
+                </a>
+                <a href="https://zalo.me/share/url?url=<?= $encoded_url ?>&title=<?= urlencode($product['name']) ?>" 
+                   target="_blank" rel="noopener" class="btn btn-sm btn-outline-info rounded-circle text-white bg-info opacity-75" title="Zalo">
+                    <span class="fw-bold p-1" style="font-size: 10px;">Zalo</span>
+                </a>
+                <button onclick="copyToClipboard()" class="btn btn-sm btn-outline-secondary rounded-circle" title="Copy Link" id="copyBtn">
+                    <i class="fa-solid fa-link p-1"></i>
+                </button>
+            </div>
+
+            <script>
+            function copyToClipboard() {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    const btn = document.getElementById('copyBtn');
+                    const originalIcon = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-check p-1 text-success"></i>';
+                    setTimeout(() => { btn.innerHTML = originalIcon; }, 2000);
+                    if(typeof showToast === 'function') showToast("Đã copy liên kết vào clipboard!");
+                    else alert("Đã copy liên kết!");
+                });
+            }
+            </script>
             
             <hr class="my-5">
             <div class="row g-3">

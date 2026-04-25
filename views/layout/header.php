@@ -55,14 +55,67 @@
                 </li>
             </ul>
             
-            <form class="d-flex align-items-center mx-lg-4 my-2 my-lg-0" action="index.php" method="GET">
+            <form class="d-flex align-items-center mx-lg-4 my-2 my-lg-0 position-relative" id="searchForm" action="index.php" method="GET">
                 <input type="hidden" name="page" value="home">
                 <div class="input-group search-group">
                     <span class="input-group-text border-0 bg-light rounded-start-pill ps-3"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                    <input type="text" name="search" class="form-control border-0 bg-light rounded-end-pill py-2" 
-                           placeholder="Tìm sản phẩm..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                    <input type="text" name="search" id="searchInput" class="form-control border-0 bg-light rounded-end-pill py-2" 
+                           placeholder="Tìm sản phẩm..." value="<?= htmlspecialchars($_GET['search'] ?? '') ?>" autocomplete="off">
+                </div>
+                <!-- Suggestion Dropdown -->
+                <div id="searchSuggest" class="position-absolute top-100 start-0 w-100 bg-white shadow-lg rounded-3 mt-2 d-none" style="z-index: 1050; border: 1px solid #eee;">
+                    <div class="list-group list-group-flush" id="suggestList"></div>
                 </div>
             </form>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchInput = document.getElementById('searchInput');
+                const suggestContainer = document.getElementById('searchSuggest');
+                const suggestList = document.getElementById('suggestList');
+
+                searchInput.addEventListener('input', function() {
+                    const q = this.value.trim();
+                    if (q.length < 2) {
+                        suggestContainer.classList.add('d-none');
+                        return;
+                    }
+
+                    fetch(`?page=search_suggest&q=${encodeURIComponent(q)}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.length > 0) {
+                                suggestList.innerHTML = data.map(item => `
+                                    <a href="?page=product_detail&id=${item.id}" class="list-group-item list-group-item-action py-2">
+                                        <div class="d-flex align-items-center">
+                                            <img src="${item.img_url}" style="width: 40px; height: 40px; object-fit: cover;" class="rounded-2 me-2 border">
+                                            <div class="overflow-hidden">
+                                                <div class="small fw-bold text-truncate text-pink">${item.name}</div>
+                                                <div class="text-muted" style="font-size: 0.75rem;">${item.current_price}</div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                `).join('');
+                                suggestContainer.classList.remove('d-none');
+                            } else {
+                                suggestContainer.classList.add('d-none');
+                            }
+                        })
+                        .catch(() => suggestContainer.classList.add('d-none'));
+                });
+
+                // Ẩn khi click ngoài hoặc nhấn ESC
+                document.addEventListener('click', (e) => {
+                    if (!searchInput.contains(e.target) && !suggestContainer.contains(e.target)) {
+                        suggestContainer.classList.add('d-none');
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') suggestContainer.classList.add('d-none');
+                });
+            });
+            </script>
 
             <ul class="navbar-nav ms-auto align-items-center gap-2">
                 <?php if (isset($_SESSION['user'])): ?>
