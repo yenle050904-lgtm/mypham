@@ -44,6 +44,10 @@ switch($page){
     case 'admin_coupons': 
         include '../views/admin_coupons.php'; 
         break;
+    case 'export_orders': 
+        include '../views/export_orders.php'; 
+        exit(); 
+        break;
     case 'profile': 
         include '../views/profile.php'; 
         break;

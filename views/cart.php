@@ -112,7 +112,14 @@ if (isset($_SESSION['coupon'])) {
 include 'layout/header.php'; 
 ?>
 
-<div class="container py-5">
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?page=home" class="text-pink text-decoration-none">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Giỏ hàng</li>
+        </ol>
+    </nav>
+
     <div class="d-flex align-items-center justify-content-between mb-5">
         <h2 class="fw-bold mb-0">🛒 Giỏ hàng của bạn</h2>
         <span class="text-muted"><?= count($cart_items) ?> Sản phẩm</span>

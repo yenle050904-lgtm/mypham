@@ -74,7 +74,21 @@ $stmt_rel->execute([$product['category_id'], $id]);
 $related_products = $stmt_rel->fetchAll();
 ?>
 
-<div class="container py-5">
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?page=home" class="text-pink text-decoration-none">Trang chủ</a></li>
+            <?php if ($product['category_id']): ?>
+            <li class="breadcrumb-item">
+                <a href="?page=home&category_id=<?= $product['category_id'] ?>" class="text-pink text-decoration-none">
+                    <?= htmlspecialchars($product['category_name']) ?>
+                </a>
+            </li>
+            <?php endif; ?>
+            <li class="breadcrumb-item active" aria-current="page"><?= htmlspecialchars($product['name']) ?></li>
+        </ol>
+    </nav>
+
     <div class="row">
         <!-- Hình ảnh sản phẩm -->
         <div class="col-lg-6">
@@ -96,17 +110,6 @@ $related_products = $stmt_rel->fetchAll();
 
         <!-- Thông tin chi tiết -->
         <div class="col-lg-6">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="?page=home" class="text-pink">Trang chủ</a></li>
-                    <li class="breadcrumb-item">
-                        <a href="?page=home&category_id=<?= $product['category_id'] ?>" class="text-pink">
-                            <?= htmlspecialchars($product['category_name']) ?>
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item active"><?= htmlspecialchars($product['name']) ?></li>
-                </ol>
-            </nav>
 
             <h1 class="display-6 fw-bold"><?= htmlspecialchars($product['name']) ?></h1>
             

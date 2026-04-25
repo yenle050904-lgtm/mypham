@@ -52,7 +52,12 @@ foreach($monthly_res as $m) {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="container py-5">
-    <h2 class="text-center mb-5 text-pink fw-bold font-elegant">📊 Hệ thống Báo cáo & Thống kê</h2>
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h2 class="mb-0 text-pink fw-bold font-elegant">📊 Hệ thống Báo cáo & Thống kê</h2>
+        <a href="?page=export_orders" class="btn btn-outline-success shadow-sm rounded-pill px-4">
+            <i class="fa-solid fa-file-csv me-2"></i>Xuất Excel (CSV)
+        </a>
+    </div>
 
     <!-- Thẻ tóm tắt -->
     <div class="row g-4 mb-5">

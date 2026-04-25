@@ -95,7 +95,15 @@ $def_address  = $u_info['address'] ?? '';
     .icon-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
 </style>
 
-<div class="container py-5">
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?page=home" class="text-pink text-decoration-none">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="?page=cart" class="text-pink text-decoration-none">Giỏ hàng</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Thanh toán</li>
+        </ol>
+    </nav>
+
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <h2 class="fw-bold mb-5 text-center">💳 Hoàn tất đặt hàng</h2>

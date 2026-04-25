@@ -43,7 +43,14 @@ if (isset($_POST['cancel_order'])) {
 
 <?php include 'layout/header.php'; ?>
 
-<div class="container py-5">
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="?page=home" class="text-pink text-decoration-none">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Đơn hàng của tôi</li>
+        </ol>
+    </nav>
+
     <h2 class="text-center mb-5 text-pink fw-bold">📋 Đơn hàng của tôi</h2>
 
     <?php if ($success): ?><div class="alert alert-success shadow-sm"><?= $success ?></div><?php endif; ?>
