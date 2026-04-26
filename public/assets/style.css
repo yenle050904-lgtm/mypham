@@ -55,6 +55,7 @@ body {
     padding: 0.5rem 1rem !important;
     border-radius: var(--radius-sm);
     transition: var(--transition);
+    white-space: nowrap;
 }
 
 .nav-link:hover {
